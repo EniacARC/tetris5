@@ -4,24 +4,27 @@ from piece import Piece
 WIDTH = 10
 HEIGHT = 20
 
+BLACK = (0, 0, 0)
 
 class Board():
 
     def __init__(self):
-        self.colors = {1: (255, 255, 255)}  # converts piece type (1, 2, 3, etc.) to color
-        self.board = [[0 for i in range(WIDTH)] for j in range(HEIGHT)]  # 0 means empty
+        # self.colors = {1: (255, 255, 255)}  # converts piece type (1, 2, 3, etc.) to color
+        self.board = [[BLACK for i in range(WIDTH)] for j in range(HEIGHT)]  # (0, 0, 0) means empty
         self.widths = [0 for i in range(HEIGHT)]
         self.heights = [0 for i in range(WIDTH)]
-        self.current_piece = None  # ~redundant maybe~
+        # self.current_piece = None  # ~redundant maybe~
         self.cleared = 0
 
-    def place(self, x, y, piece):
+    def can_place(self, x, y, piece):
         for point in piece.body:
             if x + point[0] >= WIDTH or x + point[0] < 0 or y + point[1] >= HEIGHT or y + point[1] < 0:
-                "OOB"
-            if self.board[y + point[1]][x + point[0]] != 0:
-                return "BAD"
+                return False
+            if self.board[y + point[1]][x + point[0]] != BLACK:
+                return False
+        return True
 
+    def place(self, x, y, piece):
         for point in piece.body:
             self.board[y + point[1]][x + point[0]] = piece.color
 
@@ -29,23 +32,28 @@ class Board():
 
             self.widths[y + point[1]] += 1
             self.heights[x + point[0]] = max(self.heights[x + point[0]], y + point[1])
-        self.current_piece = piece
-        return "PLC"
+        # self.current_piece = piece
+        # return "PLC"
 
     def __clear_line(self, line_num):
-        self.board[line_num] = [0] * WIDTH
+        self.board[line_num] = [BLACK] * WIDTH # clear line
         self.widths[line_num] = 0  # new line has no pieces
 
     # -----------------WORKS?-----------------
-    # !!!!!!!!!!!!!!!HEIGHTS ARRAY DOESN'T UPDATE!!!!!!!!!!!!!!!
+    # FIXED: !!!!!!!!!!!!!!!HEIGHTS ARRAY DOESN'T UPDATE!!!!!!!!!!!!!!!
     def __move_down(self, rows_move_down):
+        max_move_amount = 0
         for i, move_amount in enumerate(rows_move_down):
             if move_amount > 0:
+                max_move_amount = max(0, move_amount)
                 target_row = i - move_amount
                 if target_row >= 0:
                     self.board[target_row] = self.board[i]
                     self.widths[target_row] = self.widths[i]
                     self.__clear_line(i)
+
+        for i in range(len(self.heights)):
+            self.heights[i] = max(0, self.heights[i] - max_move_amount + 1)
 
     def clear_rows(self):
         rows_move_down = [0 for i in range(HEIGHT)]  # 0 index is the first row

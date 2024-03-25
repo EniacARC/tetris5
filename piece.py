@@ -26,6 +26,16 @@ class Piece():
 
         return skirt
 
+    def calculate_x_edge(self):
+        min_x = min(point[0] for point in self.body)
+        max_x = max(point[0] for point in self.body)
+        return min_x, max_x
+
+    def calculate_y_edge(self):
+        min_y = min(point[1] for point in self.body)
+        max_y = max(point[1] for point in self.body)
+        return min_y, max_y
+
     # piece rotations - {maybe 4 objects that all point to each other}
     def rotate_counter_clockwise(self):
         rotated_body = []
