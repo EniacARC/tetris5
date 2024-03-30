@@ -24,7 +24,37 @@ class Piece():
         # result = [skirt.get(x, None) for x in range(max(skirt.keys()) + 1)]
         result = [skirt.get(x) for x in range(max(skirt.keys()) + 1)]
 
-        return skirt
+        return result
+
+    def belt(self):
+        min_x_dict = {}
+        max_x_dict = {}
+
+        # Iterate through the points to find min and max x values for each y
+        for x, y in self.body:
+            if y not in min_x_dict or x < min_x_dict[y]:
+                min_x_dict[y] = x  # Update min x value for y
+            if y not in max_x_dict or x > max_x_dict[y]:
+                max_x_dict[y] = x  # Update max x value for y
+
+        # Create lists for min and max x values for each y
+        min_x_list = [min_x_dict[y] for y in sorted(min_x_dict.keys())]
+        max_x_list = [max_x_dict[y] for y in sorted(max_x_dict.keys())]
+
+        return min_x_list, max_x_list
+    # def belt1(self):
+    #     belt_left = {}
+    #     belt_right = {}
+    #     for x, y in self.body:
+    #         if y not in belt_left or x < belt_left[y]:
+    #             belt_left[y] = x
+    #         if y not in belt_right or x > belt_right[y]:
+    #             belt_right[y] = x
+    #
+    #     result_left = [belt_left.get(y) for y in range(max(belt_left.keys()) + 1)]
+    #     result_left = [belt_right.get(y) for y in range(max(belt_right.keys()) + 1)]
+    #
+    #     return belt_right
 
     def calculate_x_edge(self):
         min_x = min(point[0] for point in self.body)
