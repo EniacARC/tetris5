@@ -33,6 +33,8 @@ def main():
     pygame.display.set_caption("Tetris")
     clock = pygame.time.Clock()
     drop_time = 0
+    press_time = 0
+    pressed_keys = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False}
 
     # Initialize board and state
     board = Board()
@@ -56,28 +58,55 @@ def main():
 
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
         drop_time += dt
+        press_time += dt
         state.shift_x = 0  # each frame x is reset
         pressed = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
+            # Track key presses and releases
             elif event.type == pygame.KEYDOWN:
-                pressed = True
-                last_chance = True
-                if event.key == pygame.K_LEFT:
-                    state.shift_x -= 1
-                    state.move_x()
-                elif event.key == pygame.K_RIGHT:
-                    state.shift_x += 1
-                    state.move_x()
-                elif event.key == pygame.K_UP:
+                state.grace = state.grace_turns
+                if event.key == pygame.K_UP:
                     state.rotate()
+                else:
+                    pressed_keys[event.key] = True
+                # pressed = True
 
-        if drop_time >= 100:  # Half-second interval
+            elif event.type == pygame.KEYUP:
+                pressed_keys[event.key] = False
+
+        if press_time >= 50:
+            press_time = 0
+            # Handle continuous movement
+            if pressed_keys.get(pygame.K_LEFT):
+                state.shift_x -= 1
+                state.move_x()
+            elif pressed_keys.get(pygame.K_RIGHT):
+                state.shift_x += 1
+                state.move_x()
+            elif pressed_keys.get(pygame.K_DOWN):
+                state.move_y()
+            # elif pressed_keys.get(pygame.K_UP):
+            #     state.rotate()
+
+            # elif event.type == pygame.KEYDOWN:
+            #     pressed = True
+            #     if event.key == pygame.K_LEFT:
+            #         state.shift_x -= 1
+            #         state.move_x()
+            #     elif event.key == pygame.K_RIGHT:
+            #         state.shift_x += 1
+            #         state.move_x()
+            #     elif event.key == pygame.K_UP:
+            #         state.rotate()
+            # elif event.key() == pygame.KEYUP:
+
+        if drop_time >= 100:
             drop_time = 0
             state.shift_x = 0
-            game_over = state.move_y(pressed)
+            game_over = state.move_y()
 
         screen.fill(WHITE)
         draw_grid(screen, board, MINI_BLOCK, 5, -4)

@@ -39,7 +39,10 @@ class State():
         self.shift_y = -1
         self.shift_x = 0
 
-        self.grace = 5
+        self.max_grace = 20
+        self.grace_turns = 4
+        self.sum_grace = 0
+        self.grace = self.grace_turns
 
     def __set_drop_point(self):
         # find x value for drop
@@ -103,22 +106,26 @@ class State():
             print(f"moving x to {self.x + self.shift_x}")
             self.__move_piece(self.x + self.shift_x, self.y)
 
-    def move_y(self, pressed):
+    def move_y(self):
         if not self.__check_y_collision():
             self.__move_piece(self.x, self.y + self.shift_y)
             print(self.board.widths)
-            self.grace = 5
             return False
         else:
             # self.board.update_heights_array()
-            if self.grace == 0 or not pressed:
-                self.grace = 5
+            # if grace != 0 not pressed
+            if self.grace == 0 or self.sum_grace == self.max_grace:
                 self.board.lock_piece(self.x, self.y, self.current_piece)
                 self.board.clear_rows()
                 game_over = self.generate_new_piece()
                 self.board.place(self.x, self.y, self.current_piece)
+
+                self.sum_grace = 0
+                self.grace = self.grace_turns
                 return game_over
+
             self.grace -= 1
+            self.sum_grace += 1
             return False
 
     def rotate(self):
@@ -136,10 +143,4 @@ class State():
             self.current_piece.rotate_counter_clockwise()
             self.board.place(self.x, self.y, self.current_piece)
 
-
         # self.shift_x, self.shift_y = shift_x, shift_y
-
-
-
-
-
