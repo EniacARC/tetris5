@@ -52,7 +52,7 @@ def main():
 
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
         drop_time += dt
-        state.shift_x = 0
+        state.shift_x = 0 # each frame x is reset
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

@@ -187,24 +187,4 @@ class State():
             self.generate_new_piece()
             self.board.place(self.x, self.y, self.current_piece)
 
-    # def move_piece(self):
-    #     new_y, new_x = self.y, self.x
-    #     new_p = self.__down_col()
-    #     if not new_p:
-    #         new_y += self.shift_y
-    #     if not self.__side_col():
-    #         new_x += self.shift_x
-    #
-    #     self.board.place(self.x, self.y, self.mask)
-    #     print(f"placing: {self.y}, {self.x}")
-    #     self.x = new_x
-    #     self.y = new_y
-    #     self.board.place(self.x, self.y, self.current_piece)
-    #
-    #     if new_p:
-    #         print("------------------------------------------------")
-    #         print("generating new piece")
-    #         self.generate_new_piece()
-    #         self.board.place(self.x, self.y, self.current_piece)
 
-    # def move_piece_down(self):
