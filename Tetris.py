@@ -52,7 +52,7 @@ def main():
 
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
         drop_time += dt
-        state.shift_x = 0 # each frame x is reset
+        state.shift_x = 0  # each frame x is reset
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -60,15 +60,15 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     state.shift_x -= 1
-                    state.move_piece()
+                    state.move_x()
                 elif event.key == pygame.K_RIGHT:
                     state.shift_x += 1
-                    state.move_piece()
+                    state.move_x()
 
-        if drop_time >= 500:  # Half-second interval
+        if drop_time >= 250:  # Half-second interval
             drop_time = 0
             state.shift_x = 0
-            state.move_piece()
+            state.move_y()
 
 
 if __name__ == "__main__":
