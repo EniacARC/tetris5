@@ -68,6 +68,8 @@ def main():
                 elif event.key == pygame.K_RIGHT:
                     state.shift_x += 1
                     state.move_x()
+                elif event.key == pygame.K_UP:
+                    state.rotate()
 
         if drop_time >= 100:  # Half-second interval
             drop_time = 0
@@ -85,6 +87,11 @@ def main():
         pygame.display.flip()
 
     time.sleep(3)
+    for row in reversed(state.board.board):
+        for element in row:
+            print(element, end=" ")
+        print()
+    print()
     pygame.quit()
 
 

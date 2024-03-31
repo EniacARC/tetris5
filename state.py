@@ -3,15 +3,20 @@ from piece import Piece
 import random
 
 # SHOULD BE OBJECTS
-# PIECES = ([(1, 0), (1, 1), (1, 2)],  # line piece
-#           [(0, 0), (0, 1), (0, 2), (1, 0)],  # L piece
-#           [(1, 0), (2, 0), (2, 1), (2, 2)],  # reverse L piece
+# PIECES = (([(0, 0), (1, 0), (2, 0), (3, 0)], (0, 240, 240)),  # line piece
+#           ([(0, 0), (1, 0), (2, 0), (2, 1)], (240, 160, 0)),  # L piece
+#           ([(0, 0), (0, 1), (1, 0), (2, 0)], (0, 0, 240),  # reverse L piece
 #           [(0, 0), (1, 0), (1, 1), (2, 1)],  # S piece
 #           [(0, 1), (1, 0), (1, 1), (2, 0)],  # reverse S piece
 #           [(0, 0), (0, 1), (1, 1), (2, 1)],  # [] piece
 #           [(0, 0), (1, 0), (1, 1), (2, 0)])  # T piece
-PIECES = (Piece([(0, 0), (1, 0), (1, 1), (2, 1)], (255, 0, 0)),
-          Piece([(0, 0), (0, 1), (0, 2), (1, 0)], (0, 0, 255)))
+PIECES = (Piece([(0, 0), (1, 0), (2, 0), (3, 0)], (0, 240, 240)),  # line piece
+          Piece([(0, 0), (1, 0), (2, 0), (2, 1)], (240, 160, 0)),  # L piece
+          Piece([(0, 0), (0, 1), (1, 0), (2, 0)], (0, 0, 240)),  # reverse L piece
+          Piece([(0, 0), (1, 0), (1, 1), (2, 1)], (0, 240, 0)),  # S piece
+          Piece([(0, 1), (1, 0), (1, 1), (2, 0)], (240, 0, 0)),  # reverse S piece
+          Piece([(0, 0), (0, 1), (1, 1), (2, 1)], (240, 240, 0)),  # [] piece
+          Piece([(0, 0), (1, 0), (1, 1), (2, 0)], (160, 0, 240)))  # T piece
 
 BLACK = (0, 0, 0)
 
@@ -33,6 +38,8 @@ class State():
         # -- move amount a move amount y --
         self.shift_y = -1
         self.shift_x = 0
+
+        self.grace = 5
 
     def __set_drop_point(self):
         # find x value for drop
@@ -68,11 +75,12 @@ class State():
         skirt = self.current_piece.skirt()
         # print(skirt)
         for i, y_value in enumerate(skirt):
-            y = y_value + self.y + self.shift_y
-            # print(f"{y} : {self.board.heights[i + self.x + self.shift_x]}")
-            # or y + self.shift_y < self.board.heights[self.x]:
-            if y < 0:
-                return True
+            if y_value is not None:
+                y = y_value + self.y + self.shift_y
+                # print(f"{y} : {self.board.heights[i + self.x + self.shift_x]}")
+                # or y + self.shift_y < self.board.heights[self.x]:
+                if y < 0:
+                    return True
         for point in self.current_piece.body:
             x = point[0] + self.x
             y = point[1] + self.y + self.shift_y
@@ -98,9 +106,40 @@ class State():
     def move_y(self):
         if not self.__check_y_collision():
             self.__move_piece(self.x, self.y + self.shift_y)
+            print(self.board.widths)
+            self.grace = 5
             return False
         else:
             # self.board.update_heights_array()
-            game_over = self.generate_new_piece()
+            if self.grace == 0:
+                self.grace = 5
+                self.board.lock_piece(self.x, self.y, self.current_piece)
+                self.board.clear_rows()
+                game_over = self.generate_new_piece()
+                self.board.place(self.x, self.y, self.current_piece)
+                return game_over
+            self.grace -= 1
+            return False
+
+    def rotate(self):
+        # shift_x, shift_y = self.shift_x, self.shift_y
+        # self.shift_x, self.shift_y = 0, 0
+        # print("rotating")
+        self.current_piece.rotate_clockwise()
+        self.board.place(self.x, self.y, self.mask)
+        # if not self.__check_y_collision() and not self.__check_y_collision():
+        if self.board.can_place(self.x, self.y, self.current_piece):
+            self.__move_piece(self.x, self.y)
+            self.mask = Piece(self.current_piece.body, BLACK)
+        else:
+            print("invalid")
+            self.current_piece.rotate_counter_clockwise()
             self.board.place(self.x, self.y, self.current_piece)
-            return game_over
+
+
+        # self.shift_x, self.shift_y = shift_x, shift_y
+
+
+
+
+

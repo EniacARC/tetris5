@@ -21,6 +21,7 @@ class Board():
         for point in piece.body:
             if x + point[0] >= WIDTH or x + point[0] < 0 or y + point[1] >= HEIGHT or y + point[1] < 0:
                 return False
+            # self.board.board[y][x] != BLACK and (point[0], point[1] + self.shift_y) not in self.current_piece.body
             if self.board[y + point[1]][x + point[0]] != BLACK:
                 return False
         return True
@@ -31,10 +32,16 @@ class Board():
 
             # update the widths array the added piece
 
-            self.widths[y + point[1]] += 1
             # self.heights[x + point[0]] = max(self.heights[x + point[0]], y + point[1])
         # self.current_piece = piece
         # return "PLC"
+
+    def lock_piece(self, x, y, piece):
+        print(y)
+        for point in piece.body:
+            print(point[0], point[1])
+            self.widths[y + point[1]] += 1
+            # self.heights[x + point[0]] = max(self.heights[x + point[0]], y + point[1])
 
     def __clear_line(self, line_num):
         self.board[line_num] = [BLACK] * WIDTH  # clear line

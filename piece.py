@@ -26,22 +26,22 @@ class Piece():
 
         return result
 
-    def belt(self):
-        min_x_dict = {}
-        max_x_dict = {}
-
-        # Iterate through the points to find min and max x values for each y
-        for x, y in self.body:
-            if y not in min_x_dict or x < min_x_dict[y]:
-                min_x_dict[y] = x  # Update min x value for y
-            if y not in max_x_dict or x > max_x_dict[y]:
-                max_x_dict[y] = x  # Update max x value for y
-
-        # Create lists for min and max x values for each y
-        min_x_list = [min_x_dict[y] for y in sorted(min_x_dict.keys())]
-        max_x_list = [max_x_dict[y] for y in sorted(max_x_dict.keys())]
-
-        return min_x_list, max_x_list
+    # def belt(self):
+    #     min_x_dict = {}
+    #     max_x_dict = {}
+    #
+    #     # Iterate through the points to find min and max x values for each y
+    #     for x, y in self.body:
+    #         if y not in min_x_dict or x < min_x_dict[y]:
+    #             min_x_dict[y] = x  # Update min x value for y
+    #         if y not in max_x_dict or x > max_x_dict[y]:
+    #             max_x_dict[y] = x  # Update max x value for y
+    #
+    #     # Create lists for min and max x values for each y
+    #     min_x_list = [min_x_dict[y] for y in sorted(min_x_dict.keys())]
+    #     max_x_list = [max_x_dict[y] for y in sorted(max_x_dict.keys())]
+    #
+    #     return min_x_list, max_x_list
     # def belt1(self):
     #     belt_left = {}
     #     belt_right = {}
