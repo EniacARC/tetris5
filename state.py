@@ -103,7 +103,7 @@ class State():
             print(f"moving x to {self.x + self.shift_x}")
             self.__move_piece(self.x + self.shift_x, self.y)
 
-    def move_y(self):
+    def move_y(self, pressed):
         if not self.__check_y_collision():
             self.__move_piece(self.x, self.y + self.shift_y)
             print(self.board.widths)
@@ -111,7 +111,7 @@ class State():
             return False
         else:
             # self.board.update_heights_array()
-            if self.grace == 0:
+            if self.grace == 0 or not pressed:
                 self.grace = 5
                 self.board.lock_piece(self.x, self.y, self.current_piece)
                 self.board.clear_rows()

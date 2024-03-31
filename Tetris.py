@@ -57,11 +57,14 @@ def main():
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
         drop_time += dt
         state.shift_x = 0  # each frame x is reset
+        pressed = False
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
             elif event.type == pygame.KEYDOWN:
+                pressed = True
+                last_chance = True
                 if event.key == pygame.K_LEFT:
                     state.shift_x -= 1
                     state.move_x()
@@ -74,7 +77,7 @@ def main():
         if drop_time >= 100:  # Half-second interval
             drop_time = 0
             state.shift_x = 0
-            game_over = state.move_y()
+            game_over = state.move_y(pressed)
 
         screen.fill(WHITE)
         draw_grid(screen, board, MINI_BLOCK, 5, -4)
