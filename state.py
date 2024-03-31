@@ -44,14 +44,6 @@ class State():
         min_y, max_y = self.current_piece.calculate_y_edge()
         self.y = HEIGHT - 1 - max_y
 
-    def generate_new_piece(self):
-        # select a new piece from the bag. if bag is empty create new bag
-        self.bag = list(PIECES) if not self.bag else self.bag
-        self.current_piece = random.choice(self.bag)
-        self.mask = Piece(self.current_piece.body, BLACK)
-        self.bag.remove(self.current_piece)  # we used the piece so remove it from the bag
-        self.__set_drop_point()
-
     def __move_piece(self, new_x, new_y):
         self.board.place(self.x, self.y, self.mask)
         self.x = new_x
@@ -89,6 +81,15 @@ class State():
 
         return False
 
+    def generate_new_piece(self):
+        # select a new piece from the bag. if bag is empty create new bag
+        self.bag = list(PIECES) if not self.bag else self.bag
+        self.current_piece = random.choice(self.bag)
+        self.mask = Piece(self.current_piece.body, BLACK)
+        self.bag.remove(self.current_piece)  # we used the piece so remove it from the bag
+        self.__set_drop_point()
+        return self.__check_y_collision()
+
     def move_x(self):
         if not self.__check_x_collision():
             print(f"moving x to {self.x + self.shift_x}")
@@ -97,7 +98,9 @@ class State():
     def move_y(self):
         if not self.__check_y_collision():
             self.__move_piece(self.x, self.y + self.shift_y)
+            return False
         else:
-            self.board.update_heights_array()
-            self.generate_new_piece()
+            # self.board.update_heights_array()
+            game_over = self.generate_new_piece()
             self.board.place(self.x, self.y, self.current_piece)
+            return game_over

@@ -1,4 +1,6 @@
 # Import your classes
+import time
+
 import pygame
 from board import Board
 from piece import Piece
@@ -38,8 +40,40 @@ def main():
     state.generate_new_piece()
     state.board.place(state.x, state.y, state.current_piece)
 
-    running = True
-    while running:
+    # draw the screen
+    screen.fill(WHITE)
+    draw_grid(screen, board, MINI_BLOCK, 5, -4)
+    draw_grid(screen, board, MINI_BLOCK, 5, -57)
+
+    draw_grid(screen, board, MINI_BLOCK, 69, -4)
+    draw_grid(screen, board, MINI_BLOCK, 69, -57)
+    draw_grid(screen, board, BLOCK_SIZE, 16, -11)
+
+    pygame.display.flip()
+
+    game_over = False
+    while not game_over:
+
+        dt = clock.tick(60)  # Cap the frame rate at 60 FPS
+        drop_time += dt
+        state.shift_x = 0  # each frame x is reset
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_over = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LEFT:
+                    state.shift_x -= 1
+                    state.move_x()
+                elif event.key == pygame.K_RIGHT:
+                    state.shift_x += 1
+                    state.move_x()
+
+        if drop_time >= 100:  # Half-second interval
+            drop_time = 0
+            state.shift_x = 0
+            game_over = state.move_y()
+
         screen.fill(WHITE)
         draw_grid(screen, board, MINI_BLOCK, 5, -4)
         draw_grid(screen, board, MINI_BLOCK, 5, -57)
@@ -50,25 +84,8 @@ def main():
 
         pygame.display.flip()
 
-        dt = clock.tick(60)  # Cap the frame rate at 60 FPS
-        drop_time += dt
-        state.shift_x = 0  # each frame x is reset
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    state.shift_x -= 1
-                    state.move_x()
-                elif event.key == pygame.K_RIGHT:
-                    state.shift_x += 1
-                    state.move_x()
-
-        if drop_time >= 250:  # Half-second interval
-            drop_time = 0
-            state.shift_x = 0
-            state.move_y()
+    time.sleep(3)
+    pygame.quit()
 
 
 if __name__ == "__main__":
