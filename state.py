@@ -139,8 +139,15 @@ class State():
             self.__move_piece(self.x, self.y)
             self.mask = Piece(self.current_piece.body, BLACK)
         else:
-            print("invalid")
-            self.current_piece.rotate_counter_clockwise()
-            self.board.place(self.x, self.y, self.current_piece)
+            self.y += 1
+            self.board.place(self.x, self.y, self.mask)
+            if self.board.can_place(self.x, self.y, self.current_piece):
+                self.__move_piece(self.x, self.y)
+                self.mask = Piece(self.current_piece.body, BLACK)
+            else:
+                self.y -= 1
+                print("invalid")
+                self.current_piece.rotate_counter_clockwise()
+                self.board.place(self.x, self.y, self.current_piece)
 
         # self.shift_x, self.shift_y = shift_x, shift_y
