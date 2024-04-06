@@ -30,16 +30,10 @@ class Board():
         for point in piece.body:
             self.board[y + point[1]][x + point[0]] = piece.color
 
-            # update the widths array the added piece
-
-            # self.heights[x + point[0]] = max(self.heights[x + point[0]], y + point[1])
-        # self.current_piece = piece
-        # return "PLC"
-
     def lock_piece(self, x, y, piece):
-        print(y)
+        # print(y)
         for point in piece.body:
-            print(point[0], point[1])
+            # print(point[0], point[1])
             self.widths[y + point[1]] += 1
             # self.heights[x + point[0]] = max(self.heights[x + point[0]], y + point[1])
 
@@ -59,9 +53,6 @@ class Board():
                     self.widths[target_row] = self.widths[i]
                     self.__clear_line(i)
 
-        # for i in range(len(self.heights)):
-        #     self.heights[i] = max(0, self.heights[i] - max_move_amount + 1)
-
     def clear_rows(self):
         rows_move_down = [0 for i in range(HEIGHT)]  # 0 index is the first row
         down = 0
@@ -80,15 +71,3 @@ class Board():
         self.__move_down(rows_move_down)
         self.cleared += down
         return down  # numbers of new lines cleared
-
-    # def update_heights_array(self):
-    #     # should be called upon when a piece is set
-    #     self.heights = [-1 for i in range(WIDTH)]
-    #
-    #     for j in range(WIDTH):
-    #         for i in range(HEIGHT - 1, -1, -1):
-    #             if self.board[i][j] != BLACK:
-    #                 self.heights[j] = i
-    #                 break
-    #
-    #     print(self.heights)

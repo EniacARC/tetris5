@@ -15,7 +15,7 @@ PIECES = (Piece([(0, 0), (1, 0), (2, 0), (3, 0)], (0, 240, 240)),  # line piece
           Piece([(0, 0), (0, 1), (1, 0), (2, 0)], (0, 0, 240)),  # reverse L piece
           Piece([(0, 0), (1, 0), (1, 1), (2, 1)], (0, 240, 0)),  # S piece
           Piece([(0, 1), (1, 0), (1, 1), (2, 0)], (240, 0, 0)),  # reverse S piece
-          Piece([(0, 0), (0, 1), (1, 1), (2, 1)], (240, 240, 0)),  # [] piece
+          Piece([(0, 0), (0, 1), (1, 0), (1, 1)], (240, 240, 0)),  # [] piece
           Piece([(0, 0), (1, 0), (1, 1), (2, 0)], (160, 0, 240)))  # T piece
 
 BLACK = (0, 0, 0)
@@ -28,9 +28,17 @@ MIDDLE_POINT = (WIDTH - 1) // 2
 class State():
 
     def __init__(self, board):
+
+        self.game_over = False
+
         self.board = board
         self.bag = list(PIECES)
+
         self.current_piece = None
+
+        self.next = random.choice(self.bag)
+        # self.bag.remove(self.next)
+
         self.mask = None
         self.x = 0
         self.y = 0
@@ -94,10 +102,20 @@ class State():
 
     def generate_new_piece(self):
         # select a new piece from the bag. if bag is empty create new bag
-        self.bag = list(PIECES) if not self.bag else self.bag
-        self.current_piece = random.choice(self.bag)
+        # self.bag = list(PIECES) if not self.bag else self.bag
+        print()
+        for l in self.bag:
+            print(l.body)
+        print()
+        self.current_piece = self.next
+        print(self.current_piece.body)
+        if len(self.bag) == 1:
+            self.bag = list(PIECES)
+        else:
+            self.bag.remove(self.current_piece)  # we used the piece so remove it from the bag
+        self.next = random.choice(self.bag)
+
         self.mask = Piece(self.current_piece.body, BLACK)
-        self.bag.remove(self.current_piece)  # we used the piece so remove it from the bag
         self.__set_drop_point()
         return self.__check_y_collision()
 
@@ -109,7 +127,7 @@ class State():
     def move_y(self):
         if not self.__check_y_collision():
             self.__move_piece(self.x, self.y + self.shift_y)
-            print(self.board.widths)
+            # print(self.board.widths)
             return False
         else:
             # self.board.update_heights_array()
@@ -122,32 +140,38 @@ class State():
 
                 self.sum_grace = 0
                 self.grace = self.grace_turns
-                return game_over
+                self.game_over = game_over
 
             self.grace -= 1
             self.sum_grace += 1
-            return False
+
+    # def __check_pos(self, x, y):
+    #     if self.board.can_place(x, y, self.current_piece):
+    #         self.__move_piece(self.x, self.y)
+    #         self.mask = Piece(self.current_piece.body, BLACK)
+    #
+    #         self.x, self.y = x, y
+    #         return True
+    #     else:
+    #         return False
 
     def rotate(self):
         # shift_x, shift_y = self.shift_x, self.shift_y
         # self.shift_x, self.shift_y = 0, 0
         # print("rotating")
-        self.current_piece.rotate_clockwise()
+        self.current_piece = self.current_piece.rotate_clockwise()
         self.board.place(self.x, self.y, self.mask)
         # if not self.__check_y_collision() and not self.__check_y_collision():
-        if self.board.can_place(self.x, self.y, self.current_piece):
-            self.__move_piece(self.x, self.y)
-            self.mask = Piece(self.current_piece.body, BLACK)
-        else:
-            self.y += 1
-            self.board.place(self.x, self.y, self.mask)
-            if self.board.can_place(self.x, self.y, self.current_piece):
-                self.__move_piece(self.x, self.y)
+        invalid_move = True
+        for dx, dy in [(0, 0), (0, 1), (1, 0), (-1, 0)]:
+            if self.board.can_place(self.x + dx, self.y + dy, self.current_piece):
+                self.__move_piece(self.x + dx, self.y + dy)
                 self.mask = Piece(self.current_piece.body, BLACK)
-            else:
-                self.y -= 1
-                print("invalid")
-                self.current_piece.rotate_counter_clockwise()
-                self.board.place(self.x, self.y, self.current_piece)
+                invalid_move = False
+                break
 
-        # self.shift_x, self.shift_y = shift_x, shift_y
+        if invalid_move:
+            print("invalid")
+            self.current_piece = self.current_piece.rotate_counter_clockwise()
+            self.board.place(self.x, self.y, self.current_piece)
+

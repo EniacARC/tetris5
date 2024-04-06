@@ -17,8 +17,9 @@ WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 BLACK = (0, 0, 0)
 
-SERVER_IP = "127.0.0.1"
-SERVER_PORT = 7372
+MY_IP = "127.0.0.1"
+MY_PORT = 7372
+BUFFER_SIZE = 2048
 
 
 def draw_grid(screen, board, size, start_x, start_y):
@@ -63,88 +64,49 @@ def draw_boards(screen, board):
     draw_grid(screen, board, BLOCK_SIZE, 16, -11)
 
 
-def send_data(sock, data):
-    data = pickle.dumps(data)
-    sock.sendto(data, (SERVER_IP, SERVER_PORT))
+def recv_data(sock):
+    data, addr = sock.recvfrom(BUFFER_SIZE)
+    return pickle.loads(data)
 
 
 def main():
-
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
+    my_socket.bind((MY_IP, MY_PORT))
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
-    pygame.display.set_caption("Tetris")
+    pygame.display.set_caption("Server")
     clock = pygame.time.Clock()
-    drop_time = 0
-    press_time = 0
-    pressed_keys = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False}
-
     # Initialize board and state
     board = Board()
     state = State(board)
-    state.generate_new_piece()
-    state.board.place(state.x, state.y, state.current_piece)
 
     # draw the screen
     screen.fill(WHITE)
     draw_boards(screen, board)
-    draw_next_piece(screen, state.next)
     pygame.display.flip()
 
     game_over = False
     while not game_over:
-        send_data(my_socket, state)
-        dt = clock.tick(60)  # Cap the frame rate at 60 FPS
-        drop_time += dt
-        press_time += dt
-        state.shift_x = 0  # each frame x is reset
+
+        received = recv_data(my_socket)
+        state = received if received else board
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 game_over = True
-            # Track key presses and releases
-            elif event.type == pygame.KEYDOWN:
-                state.grace = state.grace_turns
-                if event.key == pygame.K_UP:
-                    state.rotate()
-                else:
-                    pressed_keys[event.key] = True
-                # pressed = True
-
-            elif event.type == pygame.KEYUP:
-                pressed_keys[event.key] = False
-
-        if press_time >= 50:
-            press_time = 0
-            # Handle continuous movement
-            if pressed_keys.get(pygame.K_LEFT):
-                state.shift_x -= 1
-                state.move_x()
-            elif pressed_keys.get(pygame.K_RIGHT):
-                state.shift_x += 1
-                state.move_x()
-            elif pressed_keys.get(pygame.K_DOWN):
-                state.move_y()
-
-        if drop_time >= 100:
-            drop_time = 0
-            state.shift_x = 0
-            state.move_y()
-            game_over = state.game_over
 
         screen.fill(WHITE)
-        draw_boards(screen, board)
-        draw_next_piece(screen, state.next)
+        draw_boards(screen, state.board)
         pygame.display.flip()
 
-    send_data(my_socket, state)
-    time.sleep(3)
-    for row in reversed(state.board.board):
-        for element in row:
-            print(element, end=" ")
-        print()
-    print()
+        game_over = state.game_over
+
+    # time.sleep(3)
+    # for row in reversed(state.board.board):
+    #     for element in row:
+    #         print(element, end=" ")
+    #     print()
+    # print()
     pygame.quit()
 
 
