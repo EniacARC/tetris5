@@ -103,12 +103,12 @@ class State():
     def generate_new_piece(self):
         # select a new piece from the bag. if bag is empty create new bag
         # self.bag = list(PIECES) if not self.bag else self.bag
-        print()
-        for l in self.bag:
-            print(l.body)
-        print()
+        # print()
+        # for l in self.bag:
+        #     print(l.body)
+        # print()
         self.current_piece = self.next
-        print(self.current_piece.body)
+        # print(self.current_piece.body)
         if len(self.bag) == 1:
             self.bag = list(PIECES)
         else:
@@ -121,7 +121,7 @@ class State():
 
     def move_x(self):
         if not self.__check_x_collision():
-            print(f"moving x to {self.x + self.shift_x}")
+            # print(f"moving x to {self.x + self.shift_x}")
             self.__move_piece(self.x + self.shift_x, self.y)
 
     def move_y(self):
