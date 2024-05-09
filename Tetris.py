@@ -30,7 +30,6 @@ BUFFER_SIZE = 2048
 LISTEN_IP = '0.0.0.0'
 LISTEN_PORT = random.randrange(2000, 2100)
 
-
 # define global vars
 # -- events ---
 change_event = threading.Event()
@@ -133,6 +132,13 @@ def draw_board(screen, board):
 #         except socket.error as err:
 #             key = ''
 
+def establish_connection(sock):
+    try:
+        sock.connect((SERVER_IP, SERVER_PORT))
+    except socket.error as err:
+        print(f"error while connection to server: {err}")
+
+
 def send_data(sock, data):
     global game_over
     while not game_over:
@@ -161,6 +167,12 @@ def main():
     # set udp socket
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.bind(('0.0.0.0', LISTEN_PORT))
+
+    # set tcp socket
+    tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    establish_connection(tcp_sock)
+    # tcp_sock.connect((SERVER_IP, SERVER_PORT))
+
     # ~ gui ~
     # start pygame
     pygame.init()
@@ -193,6 +205,12 @@ def main():
     # ~ threads ~
     send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
     send_thread.start()
+
+    state.board.add_row(2)
+    # for m in state.board.board:
+    #     for n in m:
+    #         print(n, end=" ")
+    #     print()
 
     while not game_over:
         change = False  # if change happened, update the server

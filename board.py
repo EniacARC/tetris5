@@ -1,3 +1,5 @@
+import random
+
 import pygame
 from piece import Piece
 
@@ -5,6 +7,7 @@ WIDTH = 10
 HEIGHT = 20
 
 BLACK = (0, 0, 0)
+GRAY = (105, 105, 105)
 
 
 class Board():
@@ -29,6 +32,10 @@ class Board():
     def place(self, x, y, piece):
         for point in piece.body:
             self.board[y + point[1]][x + point[0]] = piece.color
+
+    def update_widths(self):
+        for i, row in enumerate(self.board):
+            self.widths[i] = sum(1 for elem in row if elem != BLACK)
 
     def lock_piece(self, x, y, piece):
         # print(y)
@@ -71,3 +78,13 @@ class Board():
         self.__move_down(rows_move_down)
         self.cleared += down
         return down  # numbers of new lines cleared
+
+    def add_row(self, num_of_rows):
+        rand_col = random.randint(0, len(self.board[0]) - 1)
+        for i in range(num_of_rows):
+            # move rows 1 row down
+            for j in range(len(self.board) - 1, 0, -1):
+                self.board[j] = self.board[j - 1]
+                self.widths[j] = self.widths[j - 1]
+            self.board[0] = [GRAY] * len(self.board[0])
+            self.board[0][rand_col] = BLACK

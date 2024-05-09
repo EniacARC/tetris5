@@ -133,7 +133,8 @@ class State():
             # self.board.update_heights_array()
             # if grace != 0 not pressed
             if self.grace == 0 or self.sum_grace == self.max_grace:
-                self.board.lock_piece(self.x, self.y, self.current_piece)
+                # self.board.lock_piece(self.x, self.y, self.current_piece)
+                self.board.update_widths()
                 self.board.clear_rows()
                 game_over = self.generate_new_piece()
                 self.board.place(self.x, self.y, self.current_piece)
@@ -174,4 +175,10 @@ class State():
             print("invalid")
             self.current_piece = self.current_piece.rotate_counter_clockwise()
             self.board.place(self.x, self.y, self.current_piece)
+
+    def add_lines(self, num_of_lines):
+        self.board.place(self.x, self.y, self.mask)
+        self.board.add_row(num_of_lines)
+        self.board.place(self.x, self.y, self.current_piece)
+        self.board.update_widths()
 
