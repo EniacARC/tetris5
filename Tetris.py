@@ -137,7 +137,6 @@ def send_data(sock, data):
     global game_over
     while not game_over:
         change_event.wait()
-        print("sending: ")
         try:
             serialized_data = pickle.dumps(data)
             sock.sendto(serialized_data, (SERVER_IP, SERVER_PORT))
@@ -205,11 +204,13 @@ def main():
         state.shift_x = 0  # each frame x is reset
 
         for event in pygame.event.get():
+            change = True
             if event.type == pygame.QUIT:
+                # change = True
                 game_over = True
             # Track key presses and releases
             elif event.type == pygame.KEYDOWN:
-                change = True
+                # change = True
                 state.grace = state.grace_turns
                 if event.key == pygame.K_UP:
                     state.rotate()
@@ -232,6 +233,7 @@ def main():
                 state.move_x()
             elif pressed_keys.get(pygame.K_DOWN):
                 state.move_y()
+                # game_over = state.game_over
 
         # it's time to drop the piece down
         if drop_time >= 100:
@@ -267,8 +269,8 @@ def main():
             change_event.set()
             # send_data(udp_sock, state.board)
 
-    send_thread.join()
     print("done")
+    send_thread.join()
     time.sleep(3)
     pygame.quit()
 
