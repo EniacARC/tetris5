@@ -11,6 +11,7 @@ import pygame
 from board import Board
 from piece import Piece
 from state import State
+from comms import *
 
 # Constants
 BLOCK_SIZE = 24
@@ -78,16 +79,25 @@ def generate_unique_id(ip, port):
 
 
 def handle_client(sock, addr):
-    print("welcome player!")
-    player_code = generate_unique_id(addr[0], addr[1]).encode()
-    sent = 0
     try:
-        # send message length
-        while sent < len(player_code):
-            sent += sock.send(player_code[sent:])
+        print(receive_tcp(sock))
+        send_tcp(sock, "START".encode())
     except socket.error as err:
         pass
-    # Game logic goes here
+
+
+# print("welcome player!")
+# player_code = generate_unique_id(addr[0], addr[1]).encode()
+# sent = 0
+# try:
+#     # send message length
+#     while sent < len(player_code):
+#         sent += sock.send(player_code[sent:])
+# except socket.error as err:
+#     pass
+
+
+# Game logic goes here
 
 
 def main():
@@ -129,8 +139,6 @@ def main():
 
     # Close the server socket
     server_socket.close()
-
-
 
 
 # def main2():

@@ -11,6 +11,7 @@ from piece import Piece
 from state import State
 
 from collections import OrderedDict
+from comms import *
 
 # --- gui constants ---
 BLOCK_SIZE = 24
@@ -24,12 +25,15 @@ BLACK = (0, 0, 0)
 
 # --- coms constants ---
 SERVER_IP = "127.0.0.1"
-SERVER_PORT = 7372
+SERVER_PORT = 12345
 BUFFER_SIZE = 2048
 
 LISTEN_IP = '0.0.0.0'
 LISTEN_PORT = random.randrange(2000, 2100)
 
+# --- msg ---
+READY_MSG = "READY"
+START_SIGNAL = "START"
 # define global vars
 # -- events ---
 change_event = threading.Event()
@@ -44,7 +48,7 @@ game_over = False  # set game to be true
 
 
 def draw_grid(screen, board, size, start_x, start_y):
-    for y, row in enumerate(board.board):
+    for y, row in enumerate(board):
         for x, cell in enumerate(row):
             color = cell
             rect = pygame.Rect((start_x + x) * size, (HEIGHT - start_y - y - 1) * size, size, size)
@@ -132,9 +136,15 @@ def draw_board(screen, board):
 #         except socket.error as err:
 #             key = ''
 
+
 def establish_connection(sock):
     try:
         sock.connect((SERVER_IP, SERVER_PORT))
+
+        send_tcp(sock, READY_MSG.encode())
+        a = receive_tcp(sock)
+        while a != "START".encode():
+            a = receive_tcp(sock)
     except socket.error as err:
         print(f"error while connection to server: {err}")
 
@@ -198,7 +208,7 @@ def main():
 
     # draw the screen
     screen.fill(WHITE)
-    draw_board(screen, board)
+    draw_board(screen, board.board)
     draw_next_piece(screen, state.next)
     pygame.display.flip()
 
@@ -268,15 +278,15 @@ def main():
         # draw other boards:
         # ~ temp ~
         # ---
-        draw_grid(screen, board, MINI_BLOCK, 5, -4)
-        draw_grid(screen, board, MINI_BLOCK, 5, -57)
+        draw_grid(screen, board.board, MINI_BLOCK, 5, -4)
+        draw_grid(screen, board.board, MINI_BLOCK, 5, -57)
 
-        draw_grid(screen, board, MINI_BLOCK, 69, -4)
-        draw_grid(screen, board, MINI_BLOCK, 69, -57)
+        draw_grid(screen, board.board, MINI_BLOCK, 69, -4)
+        draw_grid(screen, board.board, MINI_BLOCK, 69, -57)
         # ---
 
         # draw the player and next piece
-        draw_board(screen, board)
+        draw_board(screen, board.board)
         draw_next_piece(screen, state.next)
 
         # commit the new screen
