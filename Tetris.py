@@ -9,7 +9,7 @@ import pygame
 from board import Board
 from piece import Piece
 from state import State
-
+import struct
 from collections import OrderedDict
 from comms import *
 
@@ -37,8 +37,13 @@ START_SIGNAL = "START"
 # define global vars
 # -- events ---
 change_event = threading.Event()
+# data_received_event = threading.Event()
+
+# --- locks ---
+data_lock = threading.Lock()
 # --- game global ---
 game_over = False  # set game to be true
+received_data = None
 
 
 # MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
@@ -93,48 +98,27 @@ def draw_board(screen, board):
     draw_grid(screen, board, BLOCK_SIZE, 16, -11)
 
 
-# def send_data(sock, data):
-#     b = pickle.dumps(data.board)
-#     # g = struct.pack('?', data.game_over)
-#     # to_send = b + b'|||' + g
-#     sock.sendto(b, (SERVER_IP, SERVER_PORT))
-#
-#
-# def update_player(players, id_code, board):
-#     with lock:
-#         players[id_code] = board
+def receive_updates_tcp(sock):
+    global received_data
+    while True:
+        try:
+            data = receive_tcp(sock)
+            if data != b'':
+                with data_lock:
+                    received_data = data.decode()
+                # data_received_event.set()
+            else:
+                print("empty")
+        except socket.error as err:
+            print("error while receiving update")
 
 
-# def recv_data(sock, players):
-#     # the game over is temporary and will be sent through tcp
-#     while not event_glob.is_set():
-#         try:
-#             data, addr = sock.recvfrom(BUFFER_SIZE)
-#             if data:
-#                 data = data.split(b'|||')  # id, board
-#                 update_player(players, data[0].decode(), pickle.loads(data[1]))
-#         except socket.error as err:
-#             pass
+def send_update_tcp(sock, lines, g_over):
+    data = struct.pack(PACK_SIGN, socket.htonl(lines))
+    data += b'|'
+    data += struct.pack('?', g_over)
 
-# data = data.split(b'|||')
-# return pickle.loads(data[0]), struct.unpack('?', data[1])[0]
-
-
-# def establish_connection(sock):
-#     global key
-#     while key == '':
-#         try:
-#             sock.connect(("127.0.0.1", 12345))
-#             key_add = ''
-#             while True:
-#                 buff = sock.recv(1).decode()
-#                 if buff == '':
-#                     break
-#                 key_add += buff
-#             print(key_add)
-#             key = key_add
-#         except socket.error as err:
-#             key = ''
+    send_tcp(sock, data)
 
 
 def establish_connection(sock):
@@ -149,28 +133,22 @@ def establish_connection(sock):
         print(f"error while connection to server: {err}")
 
 
-def send_data(sock, data):
-    global game_over
-    while not game_over:
-        change_event.wait()
-        try:
-            serialized_data = pickle.dumps(data)
-            sock.sendto(serialized_data, (SERVER_IP, SERVER_PORT))
-        except socket.error as err:
-            print(f"error! '{err}'")
-        finally:
-            change_event.clear()
+def send_data_udp(sock, data):
+    # global game_over
+    # while not game_over:
+    #     change_event.wait()
+    try:
+        serialized_data = pickle.dumps(data)
+        sock.sendto(serialized_data, (SERVER_IP, SERVER_PORT))
+    except socket.error as err:
+        print(f"error! '{err}'")
+    # finally:
+    #     change_event.clear()
 
 
 def main():
     global game_over
-    # my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # my_socket.bind(('0.0.0.0', 1234))
-
-    # tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #
-    # establish_connection(tcp_sock)
-
+    global received_data
     # --- define initial game states ---
     # ----------------------------------
     # ~ coms ~
@@ -213,15 +191,12 @@ def main():
     pygame.display.flip()
 
     # ~ threads ~
-    send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
-    send_thread.start()
+    # send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
+    # send_thread.start()
 
     state.board.add_row(2)
-    # for m in state.board.board:
-    #     for n in m:
-    #         print(n, end=" ")
-    #     print()
-
+    cleared_before = 0
+    cleared_current = 0
     while not game_over:
         change = False  # if change happened, update the server
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
@@ -230,6 +205,13 @@ def main():
         drop_time += dt
         press_time += dt
         state.shift_x = 0  # each frame x is reset
+        lines_to_add = 0  # how many lines player got sent
+
+        with data_lock:
+            if received_data:
+                print("received data")
+                board.add_row(lines_to_add)
+                received_data = None
 
         for event in pygame.event.get():
             change = True
@@ -269,6 +251,15 @@ def main():
             drop_time = 0
             state.shift_x = 0
             state.move_y()
+
+            cleared_before = cleared_current
+            cleared_current = state.board.cleared
+            if cleared_before != cleared_current:
+                send_lines_thread = threading.Thread(target=send_update_tcp(tcp_sock,
+                                                                            cleared_current - cleared_before,
+                                                                            game_over))
+                send_lines_thread.start()
+
             game_over = state.game_over
 
         # --- draw the new screen ---
@@ -294,11 +285,13 @@ def main():
 
         if change:
             # send the new board
-            change_event.set()
+            # change_event.set()
+            update_board_thread = threading.Thread(target=send_data_udp, args=(udp_sock, board.board))
+            update_board_thread.start()
             # send_data(udp_sock, state.board)
-
     print("done")
-    send_thread.join()
+    # send_thread.join()
+    send_update_tcp(tcp_sock, 0, True)  # tell server you finished playing
     time.sleep(3)
     pygame.quit()
 
