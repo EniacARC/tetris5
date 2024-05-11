@@ -26,6 +26,7 @@ BLACK = (0, 0, 0)
 # --- coms constants ---
 SERVER_IP = "127.0.0.1"
 SERVER_PORT = 12345
+S_UDP = 7372
 BUFFER_SIZE = 2048
 
 LISTEN_IP = '0.0.0.0'
@@ -142,7 +143,8 @@ def send_data_udp(sock, data):
     #     change_event.wait()
     try:
         serialized_data = pickle.dumps(data)
-        sock.sendto(serialized_data, (SERVER_IP, SERVER_PORT))
+        sock.sendto(serialized_data, (SERVER_IP, S_UDP))
+        print("send update")
     except socket.error as err:
         print(f"error! '{err}'")
     # finally:
@@ -238,16 +240,18 @@ def main():
 
         # Handle continuous movement
         if press_time >= 50:
-            change = True
 
             press_time = 0
             if pressed_keys.get(pygame.K_LEFT):
+                change = True
                 state.shift_x -= 1
                 state.move_x()
             elif pressed_keys.get(pygame.K_RIGHT):
+                change = True
                 state.shift_x += 1
                 state.move_x()
             elif pressed_keys.get(pygame.K_DOWN):
+                change = True
                 state.move_y()
                 # game_over = state.game_over
 

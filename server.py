@@ -12,6 +12,7 @@ from board import Board
 from piece import Piece
 from state import State
 from comms import *
+import pickle
 
 # Constants
 BLOCK_SIZE = 24
@@ -32,6 +33,8 @@ MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
 lock = threading.Lock()
 
 start_game = threading.Event()
+
+MEMORY_SIZE = (4 * 3) * 10 * 20
 
 
 def recv_data(sock):
@@ -112,6 +115,36 @@ def handle_client(sock, addr):
 #         sent += sock.send(player_code[sent:])
 # except socket.error as err:
 #     pass
+def draw_grid(screen, board, size, start_x, start_y):
+    for y, row in enumerate(board):
+        for x, cell in enumerate(row):
+            color = cell
+            rect = pygame.Rect((start_x + x) * size, (HEIGHT - start_y - y - 1) * size, size, size)
+            pygame.draw.rect(screen, GRAY, rect, 1)
+            pygame.draw.rect(screen, BLACK, rect.inflate(-1, -1), 1)
+            pygame.draw.rect(screen, color, rect.inflate(-2, -2))
+
+
+def draw_board(screen, board):
+    # draw_grid(screen, board, MINI_BLOCK, 5, -4)
+    # draw_grid(screen, board, MINI_BLOCK, 5, -57)
+    #
+    # draw_grid(screen, board, MINI_BLOCK, 69, -4)
+    # draw_grid(screen, board, MINI_BLOCK, 69, -57)
+    draw_grid(screen, board, BLOCK_SIZE, 16, -11)
+
+
+def receive_boards(sock):
+    while True:
+        print("hello")
+        data = pickle.loads(sock.recvfrom(MEMORY_SIZE)[0])
+        if data != b'':
+            for row in data:
+                for element in row:
+                    print(element, end=" ")
+                print()
+            print()
+            print("update")
 
 
 # Game logic goes here
@@ -123,7 +156,10 @@ def main():
     # Server configuration
     host = '0.0.0.0'
     port = 12345
-    backlog = 2  # Maximum number of queued connections
+    backlog = 1  # Maximum number of queued connections
+
+    t1 = threading.Thread(target=receive_boards, args=(my_socket, ))
+    t1.start()
 
     # Create TCP socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
