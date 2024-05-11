@@ -89,15 +89,16 @@ def handle_client(sock, addr):
 
         send_tcp(sock, "START".encode())
 
-        while True:
+        lines_to_add = 0
+        game_over = False
+
+        while not game_over:
             a = receive_tcp(sock)
             if a == b'':
                 return
             a = a.split(b'|')
-            a[0] = socket.htonl(struct.unpack(PACK_SIGN, a[0])[0])
-            a[1] = struct.unpack('?', a[1])[0]
-            print(a[0])
-            print(a[1])
+            lines_to_add = socket.htonl(struct.unpack(PACK_SIGN, a[0])[0])
+            game_over = struct.unpack('?', a[1])[0]
     except socket.error as err:
         print(f"error: {err}")
 
@@ -122,7 +123,7 @@ def main():
     # Server configuration
     host = '0.0.0.0'
     port = 12345
-    backlog = 1  # Maximum number of queued connections
+    backlog = 2  # Maximum number of queued connections
 
     # Create TCP socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -141,24 +142,13 @@ def main():
 
     # Accept connections
     while len(clients) < backlog:
-        # for thread in client_threads:
-        #     if not thread.is_alive():
-        #         client_threads.remove(thread)
-        # client_socket, address = server_socket.accept()
-        # connected_clients.append((client_socket, address))
-        # print(f"Accepted connection from {address}")
-        #
-        # client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
-        # client_threads.append(client_thread)
-        # client_thread.start()
-
         for client in clients:
-            if not client[1].is_alive():
+            if not client.is_alive():
                 clients.remove(client)
 
         client_socket, address = server_socket.accept()
         client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
-        clients.append(((client_socket, address), client_thread))
+        clients.append(client_thread)
         client_thread.start()
 
     start_game.set()
@@ -172,67 +162,10 @@ def main():
 
     # Wait for all client threads to complete
     for client in clients:
-        client[1].join()
+        client.join()
 
     # Close the server socket
     server_socket.close()
-
-
-# def main2():
-#     clients_to_send = []  # made up from ((ip, port), board)
-#
-#     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-#     my_socket.bind((MY_IP, MY_PORT))
-#     pygame.init()
-#     screen = pygame.display.set_mode(WINDOW_SIZE)
-#     pygame.display.set_caption("Server")
-#     clock = pygame.time.Clock()
-#     # Initialize board and state
-#     board = Board()
-#     state = State(board)
-#
-#     # draw the screen
-#     screen.fill(WHITE)
-#     draw_boards(screen, board)
-#
-#     for i in range(4):
-#         draw_other_player(screen, board, i)
-#
-#     pygame.display.flip()
-#
-#     game_over = False
-#
-#     send_interval = 1 / 60
-#     send_thread = threading.Thread(target=send_states, args=(send_interval, my_socket, clients_to_send))
-#     send_thread.start()
-#
-#     while not game_over:
-#         received = recv_data(my_socket)
-#         if received:
-#             board = received[0]
-#             game_over = received[1]
-#
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 game_over = True
-#
-#         for i, opp in enumerate(clients_to_send):
-#             draw_other_player(screen, opp[1], i)
-#
-#         screen.fill(WHITE)
-#         draw_boards(screen, board)
-#         pygame.display.flip()
-#
-#         # game_over = state.game_over
-#
-#     # time.sleep(3)
-#     # for row in reversed(state.board.board):
-#     #     for element in row:
-#     #         print(element, end=" ")
-#     #     print()
-#     # print()
-#     send_thread.join()
-#     pygame.quit()
 
 
 if __name__ == "__main__":

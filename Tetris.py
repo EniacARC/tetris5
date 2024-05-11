@@ -130,8 +130,10 @@ def establish_connection(sock):
         a = receive_tcp(sock)
         while a != "START".encode():
             a = receive_tcp(sock)
+        return True
     except socket.error as err:
         print(f"error while connection to server: {err}")
+        return False
 
 
 def send_data_udp(sock, data):
@@ -159,7 +161,7 @@ def main():
 
     # set tcp socket
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    establish_connection(tcp_sock)
+    game_over = not establish_connection(tcp_sock)
     # tcp_sock.connect((SERVER_IP, SERVER_PORT))
 
     # ~ gui ~
@@ -192,8 +194,9 @@ def main():
     pygame.display.flip()
 
     # ~ threads ~
-    recv_lines_thread = threading.Thread(target=receive_updates_tcp, args=(tcp_sock,))
-    recv_lines_thread.start()
+    if not game_over:
+        recv_lines_thread = threading.Thread(target=receive_updates_tcp, args=(tcp_sock,))
+        recv_lines_thread.start()
     # send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
     # send_thread.start()
 
