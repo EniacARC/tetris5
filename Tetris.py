@@ -100,7 +100,7 @@ def draw_board(screen, board):
 
 def receive_updates_tcp(sock):
     global received_data
-    while True:
+    while not game_over:
         try:
             data = receive_tcp(sock)
             if data != b'':
@@ -117,6 +117,7 @@ def send_update_tcp(sock, lines, g_over):
     data = struct.pack(PACK_SIGN, socket.htonl(lines))
     data += b'|'
     data += struct.pack('?', g_over)
+    print(struct.pack('?', g_over))
 
     send_tcp(sock, data)
 
@@ -191,6 +192,8 @@ def main():
     pygame.display.flip()
 
     # ~ threads ~
+    recv_lines_thread = threading.Thread(target=receive_updates_tcp, args=(tcp_sock,))
+    recv_lines_thread.start()
     # send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
     # send_thread.start()
 
@@ -294,6 +297,7 @@ def main():
     send_update_tcp(tcp_sock, 0, True)  # tell server you finished playing
     time.sleep(3)
     pygame.quit()
+    tcp_sock.close()
 
 
 if __name__ == "__main__":

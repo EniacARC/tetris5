@@ -33,7 +33,6 @@ def receive_tcp(sock):
 
         if data_len != b'':
             length = socket.htonl(struct.unpack(PACK_SIGN, data_len)[0])
-            print(length)
         while len(data) < length:
             buf = sock.recv(length - len(data))
             if buf == b'':
