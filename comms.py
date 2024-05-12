@@ -42,9 +42,12 @@ def receive_tcp(sock):
 
         return data
 
+    except socket.timeout as t_out:
+        # print("timed out")
+        return b''
     except socket.error as err:
         print(f"error while recv: {err}")
-        return b''
+        return b'ERROR'
 
 
 def recv_udp(sock, length):

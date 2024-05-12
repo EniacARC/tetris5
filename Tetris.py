@@ -23,6 +23,8 @@ WHITE = (255, 255, 255)
 GRAY = (128, 128, 128)
 BLACK = (0, 0, 0)
 
+NUM_OF_OPPS = 4
+
 # --- coms constants ---
 SERVER_IP = "127.0.0.1"
 SERVER_PORT = 12345
@@ -52,6 +54,7 @@ boards = {}
 MEMORY_SIZE_BOARD = (4 * 3) * 10 * 20
 ID_SIZE = 64
 
+MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
 
 # MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
 # lock = threading.Lock()
@@ -112,18 +115,19 @@ def receive_updates_tcp(sock):
             data = receive_tcp(sock)
             if data != b'':
                 with data_lock:
-                    received_data = data.decode()
+                    received_data = data
                 # data_received_event.set()
             else:
                 print("empty tcp")
         except socket.error as err:
-            print("error while receiving update")
+            print(f"error while receiving update: {err}")
 
 
 def send_update_tcp(sock, lines, g_over):
     data = struct.pack(PACK_SIGN, socket.htonl(lines))
     data += b'|'
     data += struct.pack('?', g_over)
+    print(f"sending to server: {data}")
     # print(struct.pack('?', g_over))
 
     send_tcp(sock, data)
@@ -134,7 +138,6 @@ def establish_connection(sock):
         sock.connect((SERVER_IP, SERVER_PORT))
         send_tcp(sock, f"LISTEN ON {LISTEN_PORT}".encode())
         a = receive_tcp(sock)
-        print(a)
         while a != "START".encode():
             send_tcp(sock, READY_MSG.encode())
             a = receive_tcp(sock)
@@ -172,7 +175,7 @@ def get_data_udp(sock):
             else:
                 print("empty udp")
         except socket.error as err:
-            print("error while receiving update")
+            print(f"error while receiving update udp: {err}")
 
 
 def main():
@@ -189,6 +192,7 @@ def main():
 
     # set tcp socket
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    tcp_sock.settimeout(1)
     game_over = not establish_connection(tcp_sock)
     # tcp_sock.connect((SERVER_IP, SERVER_PORT))
 
@@ -208,6 +212,7 @@ def main():
 
     # ~ game logic ~
     # Initialize board and state
+    empty_board = Board().board
     board = Board()
     state = State(board)
 
@@ -247,7 +252,7 @@ def main():
         with data_lock:
             if received_data:
                 print("received data")
-                board.add_row(lines_to_add)
+                state.add_lines(socket.htonl(struct.unpack(PACK_SIGN, received_data)[0]))
                 received_data = None
 
         for event in pygame.event.get():
@@ -317,15 +322,19 @@ def main():
 
         # draw the player and next piece
         draw_board(screen, board.board)
+        draw_next_piece(screen, state.next)
         with boards_lock:
+            empty = NUM_OF_OPPS
             for i in boards.values():
                 # for row in (i):
                 #     for element in row:
                 #         print(element, end=" ")
                 #     print()
                 # print()
-                draw_grid(screen, i, MINI_BLOCK, 5, -4)
-            draw_next_piece(screen, state.next)
+                draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty-1][0], MINI_BOARDS_POS[empty-1][1])
+                empty = empty - 1
+            for i in range(empty):
+                draw_grid(screen, empty_board, MINI_BLOCK, MINI_BOARDS_POS[i][0], MINI_BOARDS_POS[i][1])
 
         # commit the new screen
         pygame.display.flip()

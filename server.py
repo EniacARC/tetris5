@@ -1,6 +1,7 @@
 # Import your classes
 import hashlib
 import pickle
+import random
 import struct
 import threading
 import time
@@ -29,8 +30,6 @@ MY_IP = "127.0.0.1"
 MY_PORT = 7372
 BUFFER_SIZE = 2048
 
-MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
-
 start_game = threading.Event()
 end_game = threading.Event()
 
@@ -41,6 +40,7 @@ ID_SIZE = 256
 addr_lock = threading.Lock()
 addresses = []
 ids = []
+lines_to_send = {}
 
 
 def generate_unique_id(ip, port):
@@ -55,13 +55,18 @@ def generate_unique_id(ip, port):
 
 def handle_client(sock, addr):
     global addresses
+    global ids
+    global lines_to_send
     try:
         a = receive_tcp(sock).decode()
         if re.search(r"^LISTEN ON (\d+)", a) is None:
             return
+        player_address = (addr[0], int(''.join(filter(str.isdigit, a))))
+        player_id = generate_unique_id(addr[0], addr[1])
         with addr_lock:
-            addresses.append((addr[0], int(''.join(filter(str.isdigit, a)))))
-            ids.append(generate_unique_id(addr[0], addr[1]))
+            addresses.append(player_address)
+            ids.append(player_id)
+            lines_to_send[player_id] = 0
         while not start_game.is_set():
             send_tcp(sock, "READY".encode())
             if receive_tcp(sock).decode() != "READY":
@@ -76,13 +81,38 @@ def handle_client(sock, addr):
         game_over = False
 
         while not game_over:
+            lines = 0
+            with addr_lock:
+                if lines_to_send[player_id] != 0:
+                    lines = lines_to_send[player_id]
+                    print(lines)
+                    lines_to_send[player_id] = 0
+            if lines != 0:
+                print(f"sending: {lines}")
+                print(f"my id is: {player_id}")
+
+                print(struct.pack(PACK_SIGN, socket.htonl(lines)))
+                threading.Thread(target=send_tcp,
+                                 args=(sock, struct.pack(PACK_SIGN, socket.htonl(lines)))).start()
             a = receive_tcp(sock)
-            print(a)
-            if a == b'':
-                return
-            a = a.split(b'|')
-            lines_to_add = socket.htonl(struct.unpack(PACK_SIGN, a[0])[0])
-            game_over = struct.unpack('?', a[1])[0]
+
+            if a != b'':
+                a = a.split(b'|')
+                print(a)
+                lines_to_add = socket.htonl(struct.unpack(PACK_SIGN, a[0])[0])
+                print(f"need to add {lines_to_add}")
+                print(f"my id is: {player_id}")
+                with addr_lock:
+                    filtered_keys = [key for key in lines_to_send.keys() if key != player_id]
+                    print(filtered_keys[0])
+                    lines_to_send[random.choice(filtered_keys)] += lines_to_add
+                game_over = struct.unpack('?', a[1])[0]
+            elif a == b'ERROR':
+                game_over = True
+        with addr_lock:
+            addresses.remove(player_address)
+            ids.remove(player_id)
+
     except socket.error as err:
         print(f"error: {err}")
 
@@ -175,6 +205,7 @@ def main():
     while len(clients) < backlog:
 
         client_socket, address = server_socket.accept()
+        client_socket.settimeout(1)
         client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
         clients.append((address, client_thread))
         client_thread.start()
