@@ -46,6 +46,12 @@ data_lock = threading.Lock()
 game_over = False  # set game to be true
 received_data = None
 
+boards_lock = threading.Lock()
+boards = {}
+
+MEMORY_SIZE_BOARD = (4 * 3) * 10 * 20
+ID_SIZE = 64
+
 
 # MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
 # lock = threading.Lock()
@@ -109,7 +115,7 @@ def receive_updates_tcp(sock):
                     received_data = data.decode()
                 # data_received_event.set()
             else:
-                print("empty")
+                print("empty tcp")
         except socket.error as err:
             print("error while receiving update")
 
@@ -118,7 +124,7 @@ def send_update_tcp(sock, lines, g_over):
     data = struct.pack(PACK_SIGN, socket.htonl(lines))
     data += b'|'
     data += struct.pack('?', g_over)
-    print(struct.pack('?', g_over))
+    # print(struct.pack('?', g_over))
 
     send_tcp(sock, data)
 
@@ -126,7 +132,7 @@ def send_update_tcp(sock, lines, g_over):
 def establish_connection(sock):
     try:
         sock.connect((SERVER_IP, SERVER_PORT))
-
+        send_tcp(sock, f"LISTEN ON {LISTEN_PORT}".encode())
         a = receive_tcp(sock)
         print(a)
         while a != "START".encode():
@@ -144,12 +150,29 @@ def send_data_udp(sock, data):
     #     change_event.wait()
     try:
         serialized_data = pickle.dumps(data)
+        serialized_data = serialized_data.ljust(MEMORY_SIZE_BOARD, b'\0')
         sock.sendto(serialized_data, (SERVER_IP, S_UDP))
-        print("send update")
+        # print("send update")
     except socket.error as err:
         print(f"error! '{err}'")
     # finally:
     #     change_event.clear()
+
+
+def get_data_udp(sock):
+    global boards
+    while not game_over:
+        try:
+            data, addr = recv_udp(sock, MEMORY_SIZE_BOARD + ID_SIZE)
+            # print(data)
+            if data != b'':
+                with boards_lock:
+                    boards[data[:ID_SIZE]] = pickle.loads(data[ID_SIZE:])
+
+            else:
+                print("empty udp")
+        except socket.error as err:
+            print("error while receiving update")
 
 
 def main():
@@ -161,6 +184,8 @@ def main():
     # set udp socket
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.bind(('0.0.0.0', LISTEN_PORT))
+    udp_sock.settimeout(1)
+    print(LISTEN_PORT)
 
     # set tcp socket
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -200,6 +225,8 @@ def main():
     if not game_over:
         recv_lines_thread = threading.Thread(target=receive_updates_tcp, args=(tcp_sock,))
         recv_lines_thread.start()
+        recv_boards_thread = threading.Thread(target=get_data_udp, args=(udp_sock,))
+        recv_boards_thread.start()
     # send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
     # send_thread.start()
 
@@ -207,6 +234,7 @@ def main():
     cleared_before = 0
     cleared_current = 0
     while not game_over:
+
         change = False  # if change happened, update the server
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
 
@@ -280,16 +308,24 @@ def main():
         # draw other boards:
         # ~ temp ~
         # ---
-        draw_grid(screen, board.board, MINI_BLOCK, 5, -4)
-        draw_grid(screen, board.board, MINI_BLOCK, 5, -57)
-
-        draw_grid(screen, board.board, MINI_BLOCK, 69, -4)
-        draw_grid(screen, board.board, MINI_BLOCK, 69, -57)
+        # draw_grid(screen, board.board, MINI_BLOCK, 5, -4)
+        # draw_grid(screen, board.board, MINI_BLOCK, 5, -57)
+        #
+        # draw_grid(screen, board.board, MINI_BLOCK, 69, -4)
+        # draw_grid(screen, board.board, MINI_BLOCK, 69, -57)
         # ---
 
         # draw the player and next piece
         draw_board(screen, board.board)
-        draw_next_piece(screen, state.next)
+        with boards_lock:
+            for i in boards.values():
+                # for row in (i):
+                #     for element in row:
+                #         print(element, end=" ")
+                #     print()
+                # print()
+                draw_grid(screen, i, MINI_BLOCK, 5, -4)
+            draw_next_piece(screen, state.next)
 
         # commit the new screen
         pygame.display.flip()

@@ -45,3 +45,10 @@ def receive_tcp(sock):
     except socket.error as err:
         print(f"error while recv: {err}")
         return b''
+
+
+def recv_udp(sock, length):
+    try:
+        return sock.recvfrom(length)
+    except socket.timeout as timeout:
+        return b'', (0, 0)
