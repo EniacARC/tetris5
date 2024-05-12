@@ -127,9 +127,10 @@ def establish_connection(sock):
     try:
         sock.connect((SERVER_IP, SERVER_PORT))
 
-        send_tcp(sock, READY_MSG.encode())
         a = receive_tcp(sock)
+        print(a)
         while a != "START".encode():
+            send_tcp(sock, READY_MSG.encode())
             a = receive_tcp(sock)
         return True
     except socket.error as err:

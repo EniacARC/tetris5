@@ -36,6 +36,9 @@ start_game = threading.Event()
 
 MEMORY_SIZE = (4 * 3) * 10 * 20
 
+# boards_lock = threading.Lock()
+addresses = []
+
 
 def recv_data(sock):
     # the game over is temporary and will be sent through tcp
@@ -85,10 +88,13 @@ def generate_unique_id(ip, port):
 
 def handle_client(sock, addr):
     try:
-        if receive_tcp(sock).decode() != "READY":
-            return
+        while not start_game.is_set():
+            send_tcp(sock, "READY".encode())
+            if receive_tcp(sock).decode() != "READY":
+                print("unresponsive")
+                return
 
-        start_game.wait()
+        # start_game.wait()
 
         send_tcp(sock, "START".encode())
 
@@ -133,12 +139,15 @@ def draw_board(screen, board):
     # draw_grid(screen, board, MINI_BLOCK, 69, -57)
     draw_grid(screen, board, BLOCK_SIZE, 16, -11)
 
-
+# def send_boards(sock, addr):
+#     try:
+#         if addr in addresses
 def receive_boards(sock):
     while True:
         print("hello")
-        data = pickle.loads(sock.recvfrom(MEMORY_SIZE)[0])
+        data, addr = sock.recvfrom(MEMORY_SIZE)
         if data != b'':
+            data = pickle.loads(data)
             for row in data:
                 for element in row:
                     print(element, end=" ")
@@ -147,16 +156,19 @@ def receive_boards(sock):
             print("update")
 
 
+
+
 # Game logic goes here
 
 
 def main():
+    global addresses
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     my_socket.bind((MY_IP, MY_PORT))
     # Server configuration
     host = '0.0.0.0'
     port = 12345
-    backlog = 1  # Maximum number of queued connections
+    backlog = 2  # Maximum number of queued connections
 
     t1 = threading.Thread(target=receive_boards, args=(my_socket, ))
     t1.start()
@@ -178,14 +190,18 @@ def main():
 
     # Accept connections
     while len(clients) < backlog:
-        for client in clients:
-            if not client.is_alive():
-                clients.remove(client)
 
         client_socket, address = server_socket.accept()
         client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
-        clients.append(client_thread)
+        clients.append((address, client_thread))
         client_thread.start()
+
+        for client in clients:
+            if not client[1].is_alive():
+                clients.remove(client)
+
+    for i in range(len(clients)):
+        addresses[i] = clients[i][0]
 
     start_game.set()
 
@@ -198,7 +214,7 @@ def main():
 
     # Wait for all client threads to complete
     for client in clients:
-        client.join()
+        client[1].join()
 
     # Close the server socket
     server_socket.close()

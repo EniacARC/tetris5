@@ -9,7 +9,7 @@ def send_tcp(sock, data):
     length = struct.pack(PACK_SIGN, socket.htonl(len(data)))
     # basic protocol - length|byte(data)
     to_send = length + data
-    print(f"sending: {to_send}")
+    # print(f"sending: {to_send}")
     try:
         sent = 0
         while sent < len(to_send):
