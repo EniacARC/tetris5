@@ -56,6 +56,7 @@ ID_SIZE = 64
 
 MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
 
+
 # MINI_BOARDS_POS = [(5, -4), (5, -57), (69, -4), (69, -57)]
 # lock = threading.Lock()
 # event_glob = threading.Event()
@@ -237,9 +238,6 @@ def main():
     # send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
     # send_thread.start()
 
-    state.add_lines(1)
-    state.add_lines(1)
-    state.add_lines(1)
     cleared_before = 0
     cleared_current = 0
     while not game_over:
@@ -337,7 +335,7 @@ def main():
                 #         print(element, end=" ")
                 #     print()
                 # print()
-                draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty-1][0], MINI_BOARDS_POS[empty-1][1])
+                draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
                 empty = empty - 1
             for i in range(empty):
                 draw_grid(screen, empty_board, MINI_BLOCK, MINI_BOARDS_POS[i][0], MINI_BOARDS_POS[i][1])

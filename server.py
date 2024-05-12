@@ -181,7 +181,7 @@ def main():
     # Server configuration
     host = '0.0.0.0'
     port = 12345
-    backlog = 3  # Maximum number of queued connections
+    backlog = 5  # Maximum number of queued connections
 
     t1 = threading.Thread(target=receive_boards, args=(my_socket,))
     t1.start()
