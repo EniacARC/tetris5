@@ -161,7 +161,7 @@ def send_board(sock, addr, board):
                     msg = send_id.encode() + board
                     sock.sendto(msg, s_ad)
                 except socket.error as err:
-                    print(f"error while updating player at {addresses[i]}")
+                    print(f"error while updating player at {addresses[addr]}")
 
 
 def receive_boards(sock):
@@ -207,7 +207,7 @@ def main():
     print(f"Server listening on {MY_IP}:{TCP_PORT}")
 
     # wait for BACKLOG num of clients to connect for the game to start
-    clients = []
+    clients = {}
 
     # Accept connections
     while len(clients) < BACKLOG:
@@ -216,24 +216,24 @@ def main():
         client_socket.settimeout(1)
 
         client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
-        clients.append((address, client_thread))
+        clients[address] = client_thread
         client_thread.start()
 
         # if client was disconnected before the game starts then remove him
-        for client in clients:
-            if not client[1].is_alive():
+        for address, thread in list(clients.items()):
+            print(address, thread)
+            if not thread.is_alive():
                 with addr_lock:
-                    address = client[0]
                     if address in addresses.keys():
                         del lines_to_send[address]
                         del addresses[address]
-                clients.remove(client)
+                del clients[address]
 
     start_game.set()
 
     # Wait for all client threads to complete
-    for client in clients:
-        client[1].join()
+    for thread in clients.values():
+        thread.join()
 
     end_game.set()
 
