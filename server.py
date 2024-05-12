@@ -40,13 +40,10 @@ end_game = threading.Event()
 MEMORY_SIZE = (4 * 3) * 10 * 20
 ID_SIZE = 256
 
-# boards_lock = threading.Lock()
-addr_lock = threading.Lock()
+lock = threading.Lock()
+
 addresses = {}
 lines_to_send = {}
-
-
-
 
 def generate_unique_id(ip, port):
     """
@@ -93,7 +90,7 @@ def handle_client(sock, addr):
         player_address = (addr[0], int(''.join(filter(str.isdigit, a))))
         player_id = generate_unique_id(addr[0], addr[1])
 
-        with addr_lock:
+        with lock:
             #
             addresses[player_address] = player_id
             lines_to_send[player_id] = 0
@@ -110,7 +107,7 @@ def handle_client(sock, addr):
 
         while not game_over:
             lines = 0
-            with addr_lock:
+            with lock:
                 if lines_to_send[player_id] != 0:
                     lines = lines_to_send[player_id]
                     lines_to_send[player_id] = 0
@@ -123,7 +120,7 @@ def handle_client(sock, addr):
             if a != b'':
                 a = a.split(b'|')
                 lines_to_add = socket.htonl(struct.unpack(PACK_SIGN, a[0])[0])
-                with addr_lock:
+                with lock:
                     filtered_keys = [key for key in lines_to_send.keys() if key != player_id]
                     lines_to_send[random.choice(filtered_keys)] += lines_to_add
 
@@ -131,7 +128,7 @@ def handle_client(sock, addr):
             elif a == b'ERROR':
                 game_over = True
 
-        with addr_lock:
+        with lock:
             del addresses[player_address]
 
     except socket.error as err:
@@ -223,7 +220,7 @@ def main():
         for address, thread in list(clients.items()):
             print(address, thread)
             if not thread.is_alive():
-                with addr_lock:
+                with lock:
                     if address in addresses.keys():
                         del lines_to_send[address]
                         del addresses[address]

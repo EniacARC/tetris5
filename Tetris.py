@@ -34,6 +34,7 @@ LISTEN_IP = '0.0.0.0'
 LISTEN_PORT_UDP = random.randrange(2000, 2100)
 
 # --- msg ---
+FIRST_CONNECTION_MSG = f"LISTEN ON {LISTEN_PORT_UDP}"
 READY_MSG = "READY"
 START_SIGNAL = "START"
 # define global vars
@@ -163,7 +164,7 @@ def establish_connection(sock):
     """
     try:
         sock.connect((SERVER_IP, SERVER_PORT_TCP))
-        send_tcp(sock, f"LISTEN ON {LISTEN_PORT_UDP}".encode())
+        send_tcp(sock, FIRST_CONNECTION_MSG.encode())
         a = receive_tcp(sock)
         while a != "START".encode():
             send_tcp(sock, READY_MSG.encode())
