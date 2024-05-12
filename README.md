@@ -29,6 +29,9 @@ Objective: The objective of the multiplayer Tetris game is to outlast your oppon
 **screenshot:**
 ![gameplay](https://github.com/EniacARC/tetris5/assets/94797541/8f6edfb3-a6bd-4918-9109-dd2bf184206c)
 
+# *sequence diagram:*
+![tetris_comms](https://github.com/EniacARC/tetris5/assets/94797541/c28583c4-72b3-426d-aa77-641804c2bf6c)
+
 
 # *Installation and Usage*
 
