@@ -38,8 +38,8 @@ ID_SIZE = 256
 
 # boards_lock = threading.Lock()
 addr_lock = threading.Lock()
-addresses = []
-ids = []
+addresses = {}
+# ids = []
 lines_to_send = {}
 
 
@@ -55,7 +55,6 @@ def generate_unique_id(ip, port):
 
 def handle_client(sock, addr):
     global addresses
-    global ids
     global lines_to_send
     try:
         a = receive_tcp(sock).decode()
@@ -64,8 +63,8 @@ def handle_client(sock, addr):
         player_address = (addr[0], int(''.join(filter(str.isdigit, a))))
         player_id = generate_unique_id(addr[0], addr[1])
         with addr_lock:
-            addresses.append(player_address)
-            ids.append(player_id)
+            addresses[player_address] = player_id
+            # ids.append(player_id)
             lines_to_send[player_id] = 0
         while not start_game.is_set():
             send_tcp(sock, "READY".encode())
@@ -110,7 +109,7 @@ def handle_client(sock, addr):
             elif a == b'ERROR':
                 game_over = True
         with addr_lock:
-            addresses.remove(player_address)
+            del addresses[player_address]
             ids.remove(player_id)
 
     except socket.error as err:
@@ -138,15 +137,16 @@ def draw_board(screen, board):
 
 def send_board(sock, addr, board):
     # print(f"sending {board}")
-    if addr in addresses:
+    if addr in addresses.keys():
+        send_id = addresses[addr]
         # data = pickle.dumps(board)
-        for i in range(len(addresses)):
-            if addresses[i] != addr:
+        for s_ad, s_id in addresses.items():
+            if s_ad != addr:
                 # print("hey?")
                 try:
-                    msg = ids[i].encode() + board
+                    msg = send_id.encode() + board
 
-                    sock.sendto(msg, addresses[i])
+                    sock.sendto(msg, s_ad)
                     # print(f"sent to {addresses[i]}")
                 except socket.error as err:
                     print(f"error while updating player at {addresses[i]}")
@@ -181,7 +181,7 @@ def main():
     # Server configuration
     host = '0.0.0.0'
     port = 12345
-    backlog = 2  # Maximum number of queued connections
+    backlog = 3  # Maximum number of queued connections
 
     t1 = threading.Thread(target=receive_boards, args=(my_socket,))
     t1.start()

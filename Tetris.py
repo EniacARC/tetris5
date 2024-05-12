@@ -167,9 +167,11 @@ def get_data_udp(sock):
     while not game_over:
         try:
             data, addr = recv_udp(sock, MEMORY_SIZE_BOARD + ID_SIZE)
+
             # print(data)
             if data != b'':
                 with boards_lock:
+                    print(data[:ID_SIZE])
                     boards[data[:ID_SIZE]] = pickle.loads(data[ID_SIZE:])
 
             else:
@@ -235,7 +237,9 @@ def main():
     # send_thread = threading.Thread(target=send_data, args=(udp_sock, state))
     # send_thread.start()
 
-    state.board.add_row(2)
+    state.add_lines(1)
+    state.add_lines(1)
+    state.add_lines(1)
     cleared_before = 0
     cleared_current = 0
     while not game_over:
@@ -324,6 +328,8 @@ def main():
         draw_board(screen, board.board)
         draw_next_piece(screen, state.next)
         with boards_lock:
+            for i, n in boards.items():
+                print(i)
             empty = NUM_OF_OPPS
             for i in boards.values():
                 # for row in (i):
