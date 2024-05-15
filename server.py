@@ -190,7 +190,7 @@ def main():
     # define and bind udp socket
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     my_socket.bind((MY_IP, UDP_PORT))
-    my_socket.settimeout(1)
+    my_socket.setblocking(False)
 
     # define and bind tcp socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

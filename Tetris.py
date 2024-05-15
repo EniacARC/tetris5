@@ -210,7 +210,8 @@ def get_data_udp(sock):
                 with boards_lock:
                     boards[data[:ID_SIZE]] = pickle.loads(data[ID_SIZE:])
         except socket.error as err:
-            print(f"error while receiving update udp: {err}")
+            # print(f"error while receiving update udp: {err}")
+            pass
 
 
 def main():
@@ -225,7 +226,7 @@ def main():
     # set udp socket
     udp_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     udp_sock.bind((LISTEN_IP, LISTEN_PORT_UDP))
-    udp_sock.settimeout(1)  # set timeout for so recv isn't blocking
+    udp_sock.setblocking(False)  # set timeout for so recv isn't blocking
 
     # set tcp socket
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
