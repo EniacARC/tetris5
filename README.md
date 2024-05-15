@@ -9,7 +9,7 @@ Objective: The objective of the multiplayer Tetris game is to outlast your oppon
 
 **Controls:**
 
-    Arrow Keys: Move Tetrominoes horizontally and rotate them clockwise.
+    Arrow Keys: Move Tetrominoes horizontally.
     Down Arrow Key: Accelerate the fall of Tetrominoes.
     Up Arrow Key: Rotate Tetrominoes clockwise.
 
