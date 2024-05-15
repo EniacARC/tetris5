@@ -2,7 +2,6 @@
 
 
 This project is a multiplayer Tetris game implemented in Python using Pygame for the graphical user interface and network communication between clients and a server.
-Gameplay Mechanics
 
 # **Gameplay:**
 
