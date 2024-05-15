@@ -2,7 +2,6 @@
 
 
 This project is a multiplayer Tetris game implemented in Python using Pygame for the graphical user interface and network communication between clients and a server.
-Gameplay Mechanics
 
 # **Gameplay:**
 
@@ -10,7 +9,7 @@ Objective: The objective of the multiplayer Tetris game is to outlast your oppon
 
 **Controls:**
 
-    Arrow Keys: Move Tetrominoes horizontally and rotate them clockwise.
+    Arrow Keys: Move Tetrominoes horizontally.
     Down Arrow Key: Accelerate the fall of Tetrominoes.
     Up Arrow Key: Rotate Tetrominoes clockwise.
 
