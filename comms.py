@@ -22,8 +22,10 @@ def send_tcp(sock, data):
         sent = 0
         while sent < len(to_send):
             sent += sock.send(to_send[sent:])
+        return True
     except socket.error as err:
         print(f"error while sending at: {err}")
+        return False
 
 
 def receive_tcp(sock):
@@ -64,7 +66,7 @@ def receive_tcp(sock):
         return b''
 
     except socket.error as err:
-        print(f"error while recv: {err}")
+        # print(f"error while recv: {err}")
         return b'ERROR'
 
 

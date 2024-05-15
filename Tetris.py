@@ -125,8 +125,6 @@ def receive_updates_tcp(sock):
             if data != b'':
                 with data_lock:
                     received_data = data
-            else:
-                print("empty tcp")
         except socket.error as err:
             print(f"error while receiving update: {err}")
 
@@ -164,12 +162,13 @@ def establish_connection(sock):
     """
     try:
         sock.connect((SERVER_IP, SERVER_PORT_TCP))
-        send_tcp(sock, FIRST_CONNECTION_MSG.encode())
-        a = receive_tcp(sock)
-        while a != "START".encode():
-            send_tcp(sock, READY_MSG.encode())
+        if send_tcp(sock, FIRST_CONNECTION_MSG.encode()):
             a = receive_tcp(sock)
-        return True
+            while a != "START".encode():
+                if not send_tcp(sock, READY_MSG.encode()):
+                    return False
+                a = receive_tcp(sock)
+            return True
     except socket.error as err:
         print(f"error while connection to server: {err}")
         return False
@@ -209,10 +208,7 @@ def get_data_udp(sock):
             data, addr = recv_udp(sock, MEMORY_SIZE_BOARD + ID_SIZE)
             if data != b'':
                 with boards_lock:
-                    print(data[:ID_SIZE])
                     boards[data[:ID_SIZE]] = pickle.loads(data[ID_SIZE:])
-            else:
-                print("empty udp")
         except socket.error as err:
             print(f"error while receiving update udp: {err}")
 
@@ -235,7 +231,9 @@ def main():
     tcp_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_sock.settimeout(1)  # set timeout for so recv isn't blocking
 
-    game_over = not establish_connection(tcp_sock)  # check if we connected to the server
+    # check if we connected to the server
+    if not establish_connection(tcp_sock):
+        return
 
     # ~ gui ~
     # start pygame
