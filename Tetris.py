@@ -50,6 +50,11 @@ game_over = False  # set game to be true
 received_data = None
 boards = {}
 
+TYPE_LINES = b'L'
+TYPE_GAME_OVER = b'G'
+TYPE_WON = b'W'
+EMPTY_BOARD = Board().board
+
 
 def draw_grid(screen, board, size, start_x, start_y):
     """
@@ -220,6 +225,7 @@ def main():
     """
     global game_over
     global received_data
+    global boards
     # --- define initial game states ---
     # ----------------------------------
     # ~ coms ~
@@ -277,6 +283,7 @@ def main():
         recv_boards_thread = threading.Thread(target=get_data_udp, args=(udp_sock,))
         recv_boards_thread.start()
 
+    state.add_lines(1)
     while not game_over:
 
         change = False  # if change happened, update the server
@@ -287,11 +294,6 @@ def main():
         press_time += dt
         state.shift_x = 0  # each frame x is reset
         lines_to_add = 0  # how many lines player got sent
-
-        with data_lock:
-            if received_data:
-                state.add_lines(socket.htonl(struct.unpack(PACK_SIGN, received_data)[0]))
-                received_data = None
 
         for event in pygame.event.get():
             change = True
@@ -356,9 +358,12 @@ def main():
         with boards_lock:
             empty = NUM_OF_OPPS
             for i in boards.values():
-                draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
-                empty = empty - 1
+                if i:
+                    draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
+                else:
+                    draw_grid(screen, EMPTY_BOARD, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
 
+                empty = empty - 1
             for i in range(empty):
                 draw_grid(screen, empty_board, MINI_BLOCK, MINI_BOARDS_POS[i][0], MINI_BOARDS_POS[i][1])
 
@@ -369,7 +374,28 @@ def main():
             update_board_thread = threading.Thread(target=send_data_udp, args=(udp_sock, board.board))
             update_board_thread.start()
 
-    send_update_tcp(tcp_sock, 0, True)  # tell server you finished playing
+        with data_lock:
+            if received_data:
+                msg_type = received_data[0:1]
+                data = received_data[1:]
+
+                if msg_type == TYPE_LINES:
+                    state.add_lines(socket.htonl(struct.unpack(PACK_SIGN, data)[0]))
+                elif msg_type == TYPE_GAME_OVER:
+                    with boards_lock:
+                        boards[data] = None
+                elif msg_type == TYPE_WON:
+                    print("won")
+                    screen.fill(WHITE)
+                    pygame.display.flip()
+                    break
+
+                received_data = None
+
+    if game_over:
+        send_update_tcp(tcp_sock, 0, True)  # tell server you finished playing
+    else:
+        game_over = True
     time.sleep(3)
     pygame.quit()
     tcp_sock.close()

@@ -29,7 +29,7 @@ BLACK = (0, 0, 0)
 MY_IP = "0.0.0.0"
 UDP_PORT = 7372
 TCP_PORT = 12345
-BACKLOG = 5  # Maximum number of queued connections and the number of clients
+BACKLOG = 2  # Maximum number of queued connections and the number of client_dict
 
 # msgs
 CONNECTION_PATTERN = r"^LISTEN ON (\d+)"
@@ -40,10 +40,17 @@ end_game = threading.Event()
 MEMORY_SIZE = (4 * 3) * 10 * 20
 ID_SIZE = 256
 
-lock = threading.Lock()
+data_lock = threading.Lock()
+clients_lock = threading.Lock()
 
 addresses = {}
 lines_to_send = {}
+clients = []
+
+TYPE_LINES = b'L'
+TYPE_GAME_OVER = b'G'
+TYPE_WON = b'W'
+
 
 def generate_unique_id(ip, port):
     """
@@ -66,6 +73,14 @@ def generate_unique_id(ip, port):
     return hashed
 
 
+def broadcast_data(data, excluded_client=None):
+    with data_lock:
+        for client in clients:
+            if client != excluded_client:
+                print(f"sending {data} to {client}")
+                send_tcp(client, data)
+
+
 def handle_client(sock, addr):
     """
     Handle communication with a client.
@@ -79,6 +94,7 @@ def handle_client(sock, addr):
     """
     global addresses
     global lines_to_send
+    global clients
 
     try:
         # start initial connection,
@@ -90,37 +106,36 @@ def handle_client(sock, addr):
         player_address = (addr[0], int(''.join(filter(str.isdigit, a))))
         player_id = generate_unique_id(addr[0], addr[1])
 
-        with lock:
-            #
-            addresses[player_address] = player_id
-            lines_to_send[player_id] = 0
-
         while not start_game.is_set():
             send_tcp(sock, "READY".encode())
             if receive_tcp(sock).decode() != "READY":
                 return
 
         send_tcp(sock, "START".encode())
+        with data_lock and clients_lock:
+            addresses[player_address] = player_id
+            lines_to_send[player_id] = 0
+            clients.append(sock)
 
         lines_to_add = 0
         game_over = False
 
         while not game_over:
             lines = 0
-            with lock:
+            with data_lock:
                 if lines_to_send[player_id] != 0:
                     lines = lines_to_send[player_id]
                     lines_to_send[player_id] = 0
 
             if lines != 0:
-                threading.Thread(target=send_tcp,
-                                 args=(sock, struct.pack(PACK_SIGN, socket.htonl(lines)))).start()
+                data = TYPE_LINES + struct.pack(PACK_SIGN, socket.htonl(lines))
+                threading.Thread(target=send_tcp, args=(sock, data)).start()
             a = receive_tcp(sock)
 
             if a != b'':
                 a = a.split(b'|')
                 lines_to_add = socket.htonl(struct.unpack(PACK_SIGN, a[0])[0])
-                with lock:
+                with data_lock:
                     filtered_keys = [key for key in lines_to_send.keys() if key != player_id]
                     lines_to_send[random.choice(filtered_keys)] += lines_to_add
 
@@ -128,8 +143,23 @@ def handle_client(sock, addr):
             elif a == b'ERROR':
                 game_over = True
 
-        with lock:
+            with clients_lock:
+                print(len(clients))
+                if len(clients) < 2:
+                    game_over = True
+
+        with data_lock:
             del addresses[player_address]
+            del lines_to_send[player_id]
+
+        with clients_lock:
+            # clients.remove(sock)
+            data = TYPE_GAME_OVER + player_id.encode() if len(clients) > 1 else TYPE_WON
+            excluded_client = sock if len(clients) > 1 else None
+            print(data)
+            print(excluded_client)
+            broadcast_data(data, excluded_client)
+            clients.remove(sock)
 
     except socket.error as err:
         print(f"error: {err}")
@@ -186,6 +216,8 @@ def main():
     the main function; responsible for running the server code.
     """
     global addresses
+    global lines_to_send
+    global clients
 
     # define and bind udp socket
     my_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -203,34 +235,30 @@ def main():
     server_socket.listen(BACKLOG)
     print(f"Server listening on {MY_IP}:{TCP_PORT}")
 
-    # wait for BACKLOG num of clients to connect for the game to start
-    clients = {}
+    # wait for BACKLOG num of client_dict to connect for the game to start
+    client_dict = {}
 
     # Accept connections
-    while len(clients) < BACKLOG:
+    while len(client_dict) < BACKLOG:
 
         client_socket, address = server_socket.accept()
         client_socket.settimeout(1)
 
         client_thread = threading.Thread(target=handle_client, args=(client_socket, address))
-        clients[address] = client_thread
+        client_dict[address] = client_thread
         client_thread.start()
 
         # if client was disconnected before the game starts then remove him
-        for address, thread in list(clients.items()):
-            print(address, thread)
+        for address, thread in list(client_dict.items()):
             if not thread.is_alive():
-                with lock:
-                    if address in addresses.keys():
-                        del lines_to_send[address]
-                        del addresses[address]
-                del clients[address]
+                del client_dict[address]
 
     start_game.set()
 
     # Wait for all client threads to complete
-    for thread in clients.values():
+    for thread in client_dict.values():
         thread.join()
+        print()
 
     end_game.set()
 
