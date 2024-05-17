@@ -53,7 +53,10 @@ boards = {}
 TYPE_LINES = b'L'
 TYPE_GAME_OVER = b'G'
 TYPE_WON = b'W'
+
 EMPTY_BOARD = Board().board
+ELIMINATE_PHOTO_ADDR = "eliminated_sprite.png"
+
 
 
 def draw_grid(screen, board, size, start_x, start_y):
@@ -219,6 +222,10 @@ def get_data_udp(sock):
             pass
 
 
+def calculate_eliminate_cords(x_cord, y_cord):
+    return x_cord * MINI_BLOCK, (HEIGHT - y_cord - 15) * MINI_BLOCK
+
+
 def main():
     """
     the main function; responsible for running the client code.
@@ -247,6 +254,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption("Tetris")
+    eliminate_img = pygame.image.load(ELIMINATE_PHOTO_ADDR).convert_alpha()
 
     # set variables for time
     clock = pygame.time.Clock()
@@ -362,7 +370,7 @@ def main():
                     draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
                 else:
                     draw_grid(screen, EMPTY_BOARD, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
-
+                    screen.blit(eliminate_img, calculate_eliminate_cords(MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1]))
                 empty = empty - 1
             for i in range(empty):
                 draw_grid(screen, empty_board, MINI_BLOCK, MINI_BOARDS_POS[i][0], MINI_BOARDS_POS[i][1])

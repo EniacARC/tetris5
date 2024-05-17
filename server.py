@@ -29,7 +29,7 @@ BLACK = (0, 0, 0)
 MY_IP = "0.0.0.0"
 UDP_PORT = 7372
 TCP_PORT = 12345
-BACKLOG = 2  # Maximum number of queued connections and the number of client_dict
+BACKLOG = 5  # Maximum number of queued connections and the number of client_dict
 
 # msgs
 CONNECTION_PATTERN = r"^LISTEN ON (\d+)"
