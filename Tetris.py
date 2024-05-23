@@ -56,7 +56,7 @@ TYPE_WON = b'W'
 
 EMPTY_BOARD = Board().board
 ELIMINATE_PHOTO_ADDR = "eliminated_sprite.png"
-
+WIN_PHOTO_ADDR = "win_screen.png"
 
 
 def draw_grid(screen, board, size, start_x, start_y):
@@ -254,13 +254,15 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(WINDOW_SIZE)
     pygame.display.set_caption("Tetris")
-    eliminate_img = pygame.image.load(ELIMINATE_PHOTO_ADDR).convert_alpha()
 
     # set variables for time
     clock = pygame.time.Clock()
     drop_time = 0
     press_time = 0
 
+    # sprites
+    eliminate_img = pygame.image.load(ELIMINATE_PHOTO_ADDR).convert_alpha()
+    win_img = pygame.image.load(WIN_PHOTO_ADDR).convert_alpha()
     # set start states for all the keys
     pressed_keys = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False}
 
@@ -369,8 +371,10 @@ def main():
                 if i:
                     draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
                 else:
-                    draw_grid(screen, EMPTY_BOARD, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
-                    screen.blit(eliminate_img, calculate_eliminate_cords(MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1]))
+                    draw_grid(screen, EMPTY_BOARD, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0],
+                              MINI_BOARDS_POS[empty - 1][1])
+                    screen.blit(eliminate_img,
+                                calculate_eliminate_cords(MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1]))
                 empty = empty - 1
             for i in range(empty):
                 draw_grid(screen, empty_board, MINI_BLOCK, MINI_BOARDS_POS[i][0], MINI_BOARDS_POS[i][1])
@@ -394,7 +398,9 @@ def main():
                         boards[data] = None
                 elif msg_type == TYPE_WON:
                     print("won")
-                    screen.fill(WHITE)
+                    pygame.display.flip()
+                    time.sleep(1)
+                    screen.blit(win_img, (0, 0))
                     pygame.display.flip()
                     break
 

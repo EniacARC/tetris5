@@ -89,5 +89,3 @@ class Piece:
             new_y = 2 - x
             rotated_body.append((new_x, new_y))
         return Piece(rotated_body, self.color)
-
-

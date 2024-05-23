@@ -232,4 +232,3 @@ class State:
         self.board.add_rows(num_of_lines)
         self.board.place(self.x, self.y, self.current_piece)
         self.board.update_widths()
-
