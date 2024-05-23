@@ -57,6 +57,7 @@ EMPTY_BOARD = Board().board
 ELIMINATE_PHOTO_ADDR = "sprites/eliminated_sprite.png"
 WIN_PHOTO_ADDR = "sprites/win_screen.png"
 TILE_SET_ADDR = "sprites/tiles.png"
+NEXT_ADDR = "sprites/next_sprite.png"
 
 
 def draw_grid(screen, board, start_x, start_y, size, tile_set):
@@ -85,20 +86,25 @@ def draw_grid(screen, board, start_x, start_y, size, tile_set):
             screen.blit(tile_set, cords, tile)
 
 
-def draw_next_piece(screen, piece, tile_set):
+def draw_next_piece(screen, piece, tile_set, img):
     """
     Draws the next piece on the screen.
 
     :param screen: The surface to draw the piece on.
     :type screen: pygame.Surface
     :param piece: The Tetris piece to draw.
-    :type piece: TetrisPiece
+    :type piece: piece.Piece
     :param tile_set: The image containing the tiles to draw.
     :type tile_set: pygame.Surface
+    :param img: the next sprite
+    :type img: pygame.Surface
 
     :return: None
     """
     tile = piece.color * BLOCK_SIZE, 0, BLOCK_SIZE, BLOCK_SIZE
+
+    img_cords = 26 * BLOCK_SIZE, 9 * BLOCK_SIZE
+    screen.blit(img, img_cords)
     for point in piece.body:
         cords = (27 + point[0]) * BLOCK_SIZE, (12 - point[1]) * BLOCK_SIZE
         border = pygame.Rect(*cords, BLOCK_SIZE, BLOCK_SIZE)
@@ -273,6 +279,7 @@ def main():
 
     eliminate_img = pygame.image.load(ELIMINATE_PHOTO_ADDR).convert_alpha()
     win_img = pygame.image.load(WIN_PHOTO_ADDR).convert_alpha()
+    next_img = pygame.image.load(NEXT_ADDR).convert_alpha()
     # set start states for all the keys
     pressed_keys = {pygame.K_LEFT: False, pygame.K_RIGHT: False, pygame.K_UP: False}
 
@@ -289,7 +296,7 @@ def main():
     # draw the screen
     screen.fill(WHITE)
     draw_board(screen, board.board, tile_set)
-    draw_next_piece(screen, state.next, tile_set)
+    draw_next_piece(screen, state.next, tile_set, next_img)
     pygame.display.flip()
 
     # set variables for lines
@@ -371,7 +378,7 @@ def main():
 
         # draw the player and next piece
         draw_board(screen, board.board, tile_set)
-        draw_next_piece(screen, state.next, tile_set)
+        draw_next_piece(screen, state.next, tile_set, next_img)
 
         # draw other players:
         with boards_lock:
@@ -408,7 +415,6 @@ def main():
                     with boards_lock:
                         boards[data] = None
                 elif msg_type == TYPE_WON:
-                    print("won")
                     pygame.display.flip()
                     time.sleep(1)
                     screen.blit(win_img, (0, 0))
