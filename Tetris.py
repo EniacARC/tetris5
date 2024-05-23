@@ -15,7 +15,6 @@ WIDTH = 10  # Number of columns
 HEIGHT = 20  # Number of rows
 WINDOW_SIZE = (1008, 1008)
 WHITE = (255, 255, 255)
-GRAY = (128, 128, 128)
 BLACK = (0, 0, 0)
 
 MAIN_BOARD = (16, -11)
@@ -104,7 +103,7 @@ def draw_next_piece(screen, piece, tile_set):
         cords = (27 + point[0]) * BLOCK_SIZE, (12 - point[1]) * BLOCK_SIZE
         border = pygame.Rect(*cords, BLOCK_SIZE, BLOCK_SIZE)
         screen.blit(tile_set, cords, tile)
-        pygame.draw.rect(screen, (0, 0, 0), border, 1)
+        pygame.draw.rect(screen, BLACK, border, 1)
 
 
 def draw_board(screen, board, tile_set):
