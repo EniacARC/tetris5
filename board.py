@@ -6,8 +6,8 @@ from piece import Piece
 WIDTH = 10
 HEIGHT = 20
 
-BLACK = (0, 0, 0)
-GRAY = (105, 105, 105)
+BLACK = 0
+GRAY = 1
 
 
 class Board:

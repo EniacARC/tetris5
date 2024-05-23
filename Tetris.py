@@ -55,66 +55,72 @@ TYPE_GAME_OVER = b'G'
 TYPE_WON = b'W'
 
 EMPTY_BOARD = Board().board
-ELIMINATE_PHOTO_ADDR = "eliminated_sprite.png"
-WIN_PHOTO_ADDR = "win_screen.png"
+ELIMINATE_PHOTO_ADDR = "sprites/eliminated_sprite.png"
+WIN_PHOTO_ADDR = "sprites/win_screen.png"
+TILE_SET_ADDR = "sprites/tiles.png"
 
 
-def draw_grid(screen, board, size, start_x, start_y):
+def draw_grid(screen, board, start_x, start_y, size, tile_set):
     """
-    Draw a grid on the screen representing a game board from the x, y coordinates at the given size.
+    Draws the grid on the screen based on the provided board.
 
-    :param screen: The Pygame screen surface to draw on.
+    :param screen: The surface to draw the grid on.
     :type screen: pygame.Surface
-    :param board: The game board represented as a 2D list.
+    :param board: The 2D array representing the game board.
     :type board: list of lists
-    :param size: The size of each grid cell in pixels.
-    :type size: int
-    :param start_x: The x-coordinate of the starting position of the grid.
+    :param start_x: The starting x-coordinate of the grid on the screen.
     :type start_x: int
-    :param start_y: The y-coordinate of the starting position of the grid.
+    :param start_y: The starting y-coordinate of the grid on the screen.
     :type start_y: int
+    :param size: The size of each tile in pixels.
+    :type size: int
+    :param tile_set: The image containing the tiles to draw.
+    :type tile_set: pygame.Surface
 
     :return: None
     """
     for y, row in enumerate(board):
         for x, cell in enumerate(row):
-            color = cell
-            rect = pygame.Rect((start_x + x) * size, (HEIGHT - start_y - y - 1) * size, size, size)
-            pygame.draw.rect(screen, GRAY, rect, 1)
-            pygame.draw.rect(screen, BLACK, rect.inflate(-1, -1), 1)
-            pygame.draw.rect(screen, color, rect.inflate(-2, -2))
+            cords = (start_x + x) * size, (HEIGHT - start_y - y - 1) * size
+            tile = (cell * size, 0, size, size)
+            screen.blit(tile_set, cords, tile)
 
 
-def draw_next_piece(screen, piece):
+def draw_next_piece(screen, piece, tile_set):
     """
-    Draw the next piece preview on the screen.
+    Draws the next piece on the screen.
 
-    :param screen: The Pygame screen surface to draw on.
+    :param screen: The surface to draw the piece on.
     :type screen: pygame.Surface
-    :param piece: The next piece to be displayed.
-    :type piece: Piece
+    :param piece: The Tetris piece to draw.
+    :type piece: TetrisPiece
+    :param tile_set: The image containing the tiles to draw.
+    :type tile_set: pygame.Surface
 
     :return: None
     """
+    tile = piece.color * BLOCK_SIZE, 0, BLOCK_SIZE, BLOCK_SIZE
     for point in piece.body:
-        rect = pygame.Rect((27 + point[0]) * BLOCK_SIZE, (12 - point[1]) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
-        pygame.draw.rect(screen, GRAY, rect, 1)
-        pygame.draw.rect(screen, BLACK, rect.inflate(-1, -1), 1)
-        pygame.draw.rect(screen, piece.color, rect.inflate(-2, -2))
+        cords = (27 + point[0]) * BLOCK_SIZE, (12 - point[1]) * BLOCK_SIZE
+        border = pygame.Rect(*cords, BLOCK_SIZE, BLOCK_SIZE)
+        screen.blit(tile_set, cords, tile)
+        pygame.draw.rect(screen, (0, 0, 0), border, 1)
 
 
-def draw_board(screen, board):
+def draw_board(screen, board, tile_set):
     """
-    Draw the game board on the screen.
+    Draws the game board on the screen.
 
-    :param screen: The Pygame screen surface to draw on.
+    :param screen: The surface to draw the board on.
     :type screen: pygame.Surface
-    :param board: The game board represented as a 2D list.
+    :param board: The 2D array representing the game board.
     :type board: list of lists
+    :param tile_set: The image containing the tiles to draw.
+    :type tile_set: pygame.Surface
 
     :return: None
     """
-    draw_grid(screen, board, BLOCK_SIZE, MAIN_BOARD[0], MAIN_BOARD[1])
+    draw_grid(screen, board, MAIN_BOARD[0], MAIN_BOARD[1], BLOCK_SIZE, tile_set)
 
 
 def receive_updates_tcp(sock):
@@ -261,6 +267,11 @@ def main():
     press_time = 0
 
     # sprites
+    tile_set = pygame.image.load(TILE_SET_ADDR).convert_alpha()
+    mini_tile_set = pygame.image.load(TILE_SET_ADDR).convert_alpha()
+    tile_set_width, tile_set_height = tile_set.get_size()
+    mini_tile_set = pygame.transform.scale(mini_tile_set, (tile_set_width // 2, tile_set_height // 2))
+
     eliminate_img = pygame.image.load(ELIMINATE_PHOTO_ADDR).convert_alpha()
     win_img = pygame.image.load(WIN_PHOTO_ADDR).convert_alpha()
     # set start states for all the keys
@@ -278,8 +289,8 @@ def main():
 
     # draw the screen
     screen.fill(WHITE)
-    draw_board(screen, board.board)
-    draw_next_piece(screen, state.next)
+    draw_board(screen, board.board, tile_set)
+    draw_next_piece(screen, state.next, tile_set)
     pygame.display.flip()
 
     # set variables for lines
@@ -295,7 +306,6 @@ def main():
 
     state.add_lines(1)
     while not game_over:
-
         change = False  # if change happened, update the server
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
 
@@ -361,23 +371,25 @@ def main():
         screen.fill(WHITE)
 
         # draw the player and next piece
-        draw_board(screen, board.board)
-        draw_next_piece(screen, state.next)
+        draw_board(screen, board.board, tile_set)
+        draw_next_piece(screen, state.next, tile_set)
 
         # draw other players:
         with boards_lock:
             empty = NUM_OF_OPPS
             for i in boards.values():
                 if i:
-                    draw_grid(screen, i, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1])
+                    draw_grid(screen, i, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1],
+                              MINI_BLOCK, mini_tile_set)
                 else:
-                    draw_grid(screen, EMPTY_BOARD, MINI_BLOCK, MINI_BOARDS_POS[empty - 1][0],
-                              MINI_BOARDS_POS[empty - 1][1])
+                    draw_grid(screen, EMPTY_BOARD, MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1],
+                              MINI_BLOCK, mini_tile_set)
                     screen.blit(eliminate_img,
                                 calculate_eliminate_cords(MINI_BOARDS_POS[empty - 1][0], MINI_BOARDS_POS[empty - 1][1]))
                 empty = empty - 1
             for i in range(empty):
-                draw_grid(screen, empty_board, MINI_BLOCK, MINI_BOARDS_POS[i][0], MINI_BOARDS_POS[i][1])
+                draw_grid(screen, empty_board, MINI_BOARDS_POS[i][0], MINI_BOARDS_POS[i][1],
+                          MINI_BLOCK, mini_tile_set)
 
         # commit the new screen
         pygame.display.flip()

@@ -6,14 +6,15 @@ class Piece:
         body (list): A collection of points (x, y) that make up the piece. The x and y coordinates are relative to a 9x9 grid.
         color (tuple): The color of the piece in (R, G, B) format.
     """
+
     def __init__(self, body, color):
         """
         Initialize a Piece object with a given body and color
 
         :param body: A collection of points (x, y) that make up the piece.
         :type body: list of tuples
-        :param color: The color of the piece in (R, G, B) format.
-        :type color: tuple
+        :param color: The color of the piece
+        :type color: int
 
         :return: None
         """

@@ -3,15 +3,15 @@ from piece import Piece
 import random
 
 # define all the pieces
-PIECES = (Piece([(0, 0), (1, 0), (2, 0), (3, 0)], (0, 240, 240)),  # line piece
-          Piece([(0, 0), (1, 0), (2, 0), (2, 1)], (240, 160, 0)),  # L piece
-          Piece([(0, 0), (0, 1), (1, 0), (2, 0)], (0, 0, 240)),  # reverse L piece
-          Piece([(0, 0), (1, 0), (1, 1), (2, 1)], (0, 240, 0)),  # S piece
-          Piece([(0, 1), (1, 0), (1, 1), (2, 0)], (240, 0, 0)),  # reverse S piece
-          Piece([(0, 0), (0, 1), (1, 0), (1, 1)], (240, 240, 0)),  # [] piece
-          Piece([(0, 0), (1, 0), (1, 1), (2, 0)], (160, 0, 240)))  # T piece
+PIECES = (Piece([(0, 0), (1, 0), (2, 0), (3, 0)], 2),  # line piece
+          Piece([(0, 0), (1, 0), (2, 0), (2, 1)], 3),  # L piece
+          Piece([(0, 0), (0, 1), (1, 0), (2, 0)], 4),  # reverse L piece
+          Piece([(0, 0), (1, 0), (1, 1), (2, 1)], 5),  # S piece
+          Piece([(0, 1), (1, 0), (1, 1), (2, 0)], 6),  # reverse S piece
+          Piece([(0, 0), (0, 1), (1, 0), (1, 1)], 7),  # [] piece
+          Piece([(0, 0), (1, 0), (1, 1), (2, 0)], 8))  # T piece
 
-BLACK = (0, 0, 0)
+BLACK = 0
 WIDTH = 10
 HEIGHT = 20
 MIDDLE_POINT = (WIDTH - 1) // 2
