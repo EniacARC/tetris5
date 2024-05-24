@@ -166,7 +166,7 @@ def send_update_tcp(sock, lines, g_over):
     data += struct.pack('?', g_over)
     print(f"sending to server: {data}")
 
-    send_tcp(sock, data)
+    return send_tcp(sock, data)
 
 
 def establish_connection(sock):
@@ -424,7 +424,9 @@ def main():
                 received_data = None
 
     if game_over:
-        send_update_tcp(tcp_sock, 0, True)  # tell server you finished playing
+        sent = False
+        while not sent:
+            sent = send_update_tcp(tcp_sock, 0, True)  # tell server you finished playing
     else:
         game_over = True
     time.sleep(3)
