@@ -310,7 +310,6 @@ def main():
         recv_boards_thread = threading.Thread(target=get_data_udp, args=(udp_sock,))
         recv_boards_thread.start()
 
-    state.add_lines(1)
     while not game_over:
         change = False  # if change happened, update the server
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
