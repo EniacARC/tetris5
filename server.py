@@ -145,6 +145,7 @@ def handle_client(sock, addr):
             elif a == b'ERROR':
                 game_over = True
 
+            with clients_lock:
                 if len(clients) < 2:
                     game_over = True
 
