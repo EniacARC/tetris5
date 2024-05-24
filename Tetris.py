@@ -427,9 +427,9 @@ def main():
         data = struct.pack(PACK_SIGN, socket.htonl(0))
         data += b'|'
         data += struct.pack('?', True)
-        sent = False
+        sent = send_tcp(tcp_sock, data)
         while not sent:
-            send_tcp(tcp_sock, data)
+            sent = send_tcp(tcp_sock, data)
     else:
         game_over = True
     time.sleep(3)
