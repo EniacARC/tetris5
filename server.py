@@ -78,7 +78,9 @@ def broadcast_data(data, excluded_client=None):
         for client in clients:
             if client != excluded_client:
                 print(f"sending {data} to {client}")
-                send_tcp(client, data)
+                sent = send_tcp(client, data)
+                while not sent:
+                    sent = send_tcp(client, data)
 
 
 def handle_client(sock, addr):
@@ -144,7 +146,6 @@ def handle_client(sock, addr):
                 game_over = True
 
             with clients_lock:
-                print(len(clients))
                 if len(clients) < 2:
                     game_over = True
 
@@ -156,10 +157,9 @@ def handle_client(sock, addr):
             # clients.remove(sock)
             data = TYPE_GAME_OVER + player_id.encode() if len(clients) > 1 else TYPE_WON
             excluded_client = sock if len(clients) > 1 else None
-            print(data)
-            print(excluded_client)
             broadcast_data(data, excluded_client)
             clients.remove(sock)
+            sock.close()
 
     except socket.error as err:
         print(f"error: {err}")
