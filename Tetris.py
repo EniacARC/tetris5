@@ -310,7 +310,6 @@ def main():
         recv_boards_thread = threading.Thread(target=get_data_udp, args=(udp_sock,))
         recv_boards_thread.start()
 
-    state.add_lines(1)
     while not game_over:
         change = False  # if change happened, update the server
         dt = clock.tick(60)  # Cap the frame rate at 60 FPS
@@ -424,7 +423,12 @@ def main():
                 received_data = None
 
     if game_over:
-        send_update_tcp(tcp_sock, 0, True)  # tell server you finished playing
+        data = struct.pack(PACK_SIGN, socket.htonl(0))
+        data += b'|'
+        data += struct.pack('?', True)
+        sent = send_tcp(tcp_sock, data)
+        while not sent:
+            sent = send_tcp(tcp_sock, data)
     else:
         game_over = True
     time.sleep(3)

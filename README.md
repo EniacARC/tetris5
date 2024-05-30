@@ -26,11 +26,41 @@ Objective: The objective of the multiplayer Tetris game is to outlast your oppon
     Network Communication: The game communicates player moves and game state updates between clients and the server over a network connection, enabling seamless multiplayer gameplay.
     
 **screenshot:**
-![gameplay](https://github.com/EniacARC/tetris5/assets/94797541/8f6edfb3-a6bd-4918-9109-dd2bf184206c)
+![Screenshot_2](https://github.com/EniacARC/exc2-7-2/assets/94797541/9b2c125e-e897-4f88-82d7-ccbd0bf09c21)
 
-# *sequence diagram:*
+---
+
+# *sequence diagram + protocol:*
+### sequence diagram:
 ![tetris_comms](https://github.com/EniacARC/tetris5/assets/94797541/c28583c4-72b3-426d-aa77-641804c2bf6c)
 
+## explanation and protocol:
+
+### tcp
+client -> server: lines_to_add|game_over  
+server -> client: msg_type (1 byte) + data (optional)  
+
+### udp
+client -> server: Board object (set size of 2400 bytes)  
+server -> client: id (set size 64 bytes) + Board object (set size of 2400 bytes)  
+
+### explanation
+the server is connected to all the clients using tcp sockets and both the cliet and the server have listening udp sockets.  
+the server hashes all the clients to generate them a unique id based on their addr and port.  
+every time the board state changes the client send the updates board to the server and the server attaches the player's id and sends it to all the other players.  
+every time a player clears a line a msg is sent to the server reflecting that. the server then sends to the another client a msg with type line to add x lines to his board.  
+if a player was eliminated he will send a msg that he was eliminated. the server will then send a game_over type msg with the player id that was eliminated.  
+if only 1 player remains the server sends a win_typ msg to the client.  
+
+
+# *the main ideas in the planning of the project*
+* disecting the game into classes so you can send each class over the network
+* using both udp and tcp for immediate and general data
+  - udp for the board class
+  - tcp for game over updates and lines sent, both of which aren't time dependant
+* try to minimise error by encapsulating and using try-catch 
+
+---
 
 # *Installation and Usage*
 
